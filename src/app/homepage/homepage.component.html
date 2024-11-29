@@ -1,0 +1,39 @@
+<div class="header">
+    <h1>Listing App</h1>
+  
+    <input
+      type="text"
+      placeholder="Search..."
+      [(ngModel)]="searchQuery"
+      (input)="applySearchFilter()"
+      class="search-bar"
+    />
+  
+    <div class="tabs">
+      <button [class.active]="activeTab === 'books'" (click)="setTab('books')">
+        Books
+      </button>
+      <button [class.active]="activeTab === 'movies'" (click)="setTab('movies')">
+        Movies
+      </button>
+      <button [class.active]="activeTab === 'all'" (click)="setTab('all')">
+        All
+      </button>
+    </div>
+  </div>
+  
+  <div class="results">
+    <div *ngFor="let item of results; let i = index" class="card">
+      <h3>{{ item.title }}</h3>
+      <p *ngIf="item.author">Author: {{ item.author }}</p>
+      <p *ngIf="item.cast">Cast: {{ item.cast.join(', ') }}</p>
+  
+      <div class="three-dots" (click)="toggleOptions(i)">...</div>
+  
+      <div *ngIf="showOptions === i" class="card-options">
+        <button (click)="updateItem(item)">Update</button>
+        <button (click)="deleteItem(item)">Delete</button>
+      </div>
+    </div>
+  </div>
+  

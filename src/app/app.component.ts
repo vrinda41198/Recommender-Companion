@@ -1,12 +1,15 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+
+import { HomepageComponent } from './homepage/homepage.component';
+
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  standalone: true,
+  imports: [HomepageComponent], // Import the homepage component
+  template: `<app-homepage></app-homepage>`, // Embed the homepage component
+  styleUrls: ['./homepage/homepage.component.css'],
 })
 export class AppComponent {
-  title = 'listing-ui';
+  title = 'listing-ui'; // Ensure this matches the test
 }
