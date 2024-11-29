@@ -1,7 +1,5 @@
 # Recommender Companion
 
-A Flask application with MySQL database and Flyway migrations running in Docker.
-
 ## Prerequisites
 
 - Docker
