@@ -10,116 +10,105 @@ import { AdminService, Movie, Book } from '../services/admin.service';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
-    <div class="min-h-screen bg-gray-100">
+    <div class="container">
       <!-- Navigation -->
-      <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4">
-          <div class="flex justify-between h-16">
-            <div class="flex items-center">
-              <h1 class="text-2xl font-bold text-blue-600">Admin Dashboard</h1>
-            </div>
-            
-            <div class="flex items-center space-x-4">
-              <span class="text-gray-600">
-                Welcome, {{user?.displayName}}
-              </span>
-              <button 
-                (click)="navigateToHome()" 
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200">
-                Home
-              </button>
-              <button 
-                (click)="logout()" 
-                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200">
-                Logout
-              </button>
-            </div>
+      <nav class="header">
+        <div class="header-content">
+          <div class="header-title">
+            <h1 class="app-title">Admin Dashboard</h1>
+          </div>
+          
+          <div class="user-section">
+            <span class="user-name">
+              Welcome, {{user?.displayName}}
+            </span>
+            <button 
+              (click)="navigateToHome()" 
+              class="home-button">
+              Home
+            </button>
+            <button 
+              (click)="logout()" 
+              class="logout-button">
+              Logout
+            </button>
           </div>
         </div>
       </nav>
 
       <!-- Main Content -->
-      <div class="pt-20 max-w-7xl mx-auto px-4">
+      <main class="main-content">
         <!-- Content Tabs -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div class="flex border-b">
+        <div class="content-card">
+          <div class="tabs-container">
             <button 
               *ngFor="let tab of ['movies', 'books']"
               (click)="activeTab = tab"
-              [class.border-blue-500]="activeTab === tab"
-              [class.border-transparent]="activeTab !== tab"
-              class="py-2 px-4 -mb-px border-b-2 text-sm font-medium transition duration-200"
-              [class.text-blue-600]="activeTab === tab"
-              [class.text-gray-500]="activeTab !== tab">
+              [class]="'tab-button ' + (activeTab === tab ? 'active' : '')">
               {{tab | titlecase}}
             </button>
           </div>
 
           <!-- Movie Form -->
-          <div *ngIf="activeTab === 'movies'" class="mt-6">
-            <form [formGroup]="movieForm" (ngSubmit)="onMovieSubmit()" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Title</label>
+          <div *ngIf="activeTab === 'movies'" class="form-container">
+            <form [formGroup]="movieForm" (ngSubmit)="onMovieSubmit()" class="form">
+              <div class="form-group">
+                <label>Title</label>
                 <input
                   type="text"
                   formControlName="title"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="movieForm.get('title')?.invalid && movieForm.get('title')?.touched"
+                  [class.error]="movieForm.get('title')?.invalid && movieForm.get('title')?.touched"
                 >
                 <div *ngIf="movieForm.get('title')?.invalid && movieForm.get('title')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Title is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Cast (comma separated)</label>
+              <div class="form-group">
+                <label>Cast (comma separated)</label>
                 <input
                   type="text"
                   formControlName="cast"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="movieForm.get('cast')?.invalid && movieForm.get('cast')?.touched"
+                  [class.error]="movieForm.get('cast')?.invalid && movieForm.get('cast')?.touched"
                 >
                 <div *ngIf="movieForm.get('cast')?.invalid && movieForm.get('cast')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Cast is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Description</label>
+              <div class="form-group">
+                <label>Description</label>
                 <textarea
                   formControlName="description"
                   rows="3"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="movieForm.get('description')?.invalid && movieForm.get('description')?.touched"
+                  [class.error]="movieForm.get('description')?.invalid && movieForm.get('description')?.touched"
                 ></textarea>
                 <div *ngIf="movieForm.get('description')?.invalid && movieForm.get('description')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Description is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Release Year</label>
+              <div class="form-group">
+                <label>Release Year</label>
                 <input
                   type="number"
                   formControlName="release_year"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="movieForm.get('release_year')?.invalid && movieForm.get('release_year')?.touched"
+                  [class.error]="movieForm.get('release_year')?.invalid && movieForm.get('release_year')?.touched"
                 >
                 <div *ngIf="movieForm.get('release_year')?.invalid && movieForm.get('release_year')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Valid release year is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Genre</label>
+              <div class="form-group">
+                <label>Genre</label>
                 <select
                   formControlName="genre"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="movieForm.get('genre')?.invalid && movieForm.get('genre')?.touched"
+                  [class.error]="movieForm.get('genre')?.invalid && movieForm.get('genre')?.touched"
                 >
                   <option value="">Select Genre</option>
                   <option value="Action">Action</option>
@@ -130,17 +119,16 @@ import { AdminService, Movie, Book } from '../services/admin.service';
                   <option value="Thriller">Thriller</option>
                 </select>
                 <div *ngIf="movieForm.get('genre')?.invalid && movieForm.get('genre')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Genre is required
                 </div>
               </div>
 
-              <div class="flex justify-end">
+              <div class="form-actions">
                 <button 
                   type="submit"
                   [disabled]="movieForm.invalid || isSubmitting"
-                  class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition duration-200 disabled:opacity-50"
-                >
+                  class="submit-button">
                   {{ isSubmitting ? 'Adding...' : 'Add Movie' }}
                 </button>
               </div>
@@ -148,70 +136,65 @@ import { AdminService, Movie, Book } from '../services/admin.service';
           </div>
 
           <!-- Book Form -->
-          <div *ngIf="activeTab === 'books'" class="mt-6">
-            <form [formGroup]="bookForm" (ngSubmit)="onBookSubmit()" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Title</label>
+          <div *ngIf="activeTab === 'books'" class="form-container">
+            <form [formGroup]="bookForm" (ngSubmit)="onBookSubmit()" class="form">
+              <div class="form-group">
+                <label>Title</label>
                 <input
                   type="text"
                   formControlName="title"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="bookForm.get('title')?.invalid && bookForm.get('title')?.touched"
+                  [class.error]="bookForm.get('title')?.invalid && bookForm.get('title')?.touched"
                 >
                 <div *ngIf="bookForm.get('title')?.invalid && bookForm.get('title')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Title is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Author</label>
+              <div class="form-group">
+                <label>Author</label>
                 <input
                   type="text"
                   formControlName="author"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="bookForm.get('author')?.invalid && bookForm.get('author')?.touched"
+                  [class.error]="bookForm.get('author')?.invalid && bookForm.get('author')?.touched"
                 >
                 <div *ngIf="bookForm.get('author')?.invalid && bookForm.get('author')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Author is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Description</label>
+              <div class="form-group">
+                <label>Description</label>
                 <textarea
                   formControlName="description"
                   rows="3"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="bookForm.get('description')?.invalid && bookForm.get('description')?.touched"
+                  [class.error]="bookForm.get('description')?.invalid && bookForm.get('description')?.touched"
                 ></textarea>
                 <div *ngIf="bookForm.get('description')?.invalid && bookForm.get('description')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Description is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Publish Year</label>
+              <div class="form-group">
+                <label>Publish Year</label>
                 <input
                   type="number"
                   formControlName="publish_year"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="bookForm.get('publish_year')?.invalid && bookForm.get('publish_year')?.touched"
+                  [class.error]="bookForm.get('publish_year')?.invalid && bookForm.get('publish_year')?.touched"
                 >
                 <div *ngIf="bookForm.get('publish_year')?.invalid && bookForm.get('publish_year')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Valid publish year is required
                 </div>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Genre</label>
+              <div class="form-group">
+                <label>Genre</label>
                 <select
                   formControlName="genre"
-                  class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  [class.border-red-500]="bookForm.get('genre')?.invalid && bookForm.get('genre')?.touched"
+                  [class.error]="bookForm.get('genre')?.invalid && bookForm.get('genre')?.touched"
                 >
                   <option value="">Select Genre</option>
                   <option value="Fiction">Fiction</option>
@@ -222,17 +205,16 @@ import { AdminService, Movie, Book } from '../services/admin.service';
                   <option value="Biography">Biography</option>
                 </select>
                 <div *ngIf="bookForm.get('genre')?.invalid && bookForm.get('genre')?.touched" 
-                     class="text-red-500 text-sm mt-1">
+                     class="error-message">
                   Genre is required
                 </div>
               </div>
 
-              <div class="flex justify-end">
+              <div class="form-actions">
                 <button 
                   type="submit"
                   [disabled]="bookForm.invalid || isSubmitting"
-                  class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition duration-200 disabled:opacity-50"
-                >
+                  class="submit-button">
                   {{ isSubmitting ? 'Adding...' : 'Add Book' }}
                 </button>
               </div>
@@ -242,69 +224,239 @@ import { AdminService, Movie, Book } from '../services/admin.service';
 
         <!-- Success/Error Messages -->
         <div *ngIf="submitMessage" 
-             [class.bg-green-50]="submitSuccess"
-             [class.bg-red-50]="!submitSuccess"
-             class="p-4 rounded-lg mb-8">
-          <p [class.text-green-700]="submitSuccess"
-             [class.text-red-700]="!submitSuccess"
-             class="text-sm font-medium">
-            {{submitMessage}}
-          </p>
+             [class]="'message-box ' + (submitSuccess ? 'success' : 'error')">
+          <p class="message-text">{{submitMessage}}</p>
         </div>
-
-        <!-- Recent Items -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">
-            Recently Added {{activeTab | titlecase}}
-          </h2>
-          
-          <!-- Movies Table -->
-          <div *ngIf="activeTab === 'movies'" class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cast</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Genre</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let movie of recentMovies">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{movie.title}}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{movie.cast.join(', ')}}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{movie.release_year}}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{movie.genre}}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Books Table -->
-          <div *ngIf="activeTab === 'books'" class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                  <th class="px-6<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Genre</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let book of recentBooks">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{book.title}}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{book.author}}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{book.publish_year}}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{book.genre}}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
-  `
+  `,
+  styles: [`
+    .container {
+      min-height: 100vh;
+      background-color: #f5f5f5;
+    }
+
+    .header {
+      background-color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 1rem 0;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-title {
+      font-size: 1.5rem;
+      color: #333;
+      margin: 0;
+    }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-name {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .home-button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .home-button:hover {
+      background-color: #1d4ed8;
+    }
+
+    .logout-button {
+      background-color: #dc2626;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .logout-button:hover {
+      background-color: #b91c1c;
+    }
+
+    .main-content {
+      max-width: 1200px;
+      margin: 4rem auto 2rem;
+      padding: 0 1rem;
+    }
+
+    .content-card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .tabs-container {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: none;
+      color: #6b7280;
+      font-weight: 500;
+      cursor: pointer;
+      margin-right: 1rem;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-button.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+
+    .form-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .form-group input.error,
+    .form-group select.error,
+    .form-group textarea.error {
+      border-color: #dc2626;
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 0.875rem;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .submit-button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .submit-button:hover {
+      background-color: #1d4ed8;
+    }
+
+    .submit-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .message-box {
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    .message-box.success {
+      background-color: #f0fdf4;
+      border: 1px solid #86efac;
+    }
+
+    .message-box.error {
+      background-color: #fef2f2;
+      border: 1px solid #fca5a5;
+    }
+
+    .message-text {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .message-box.success .message-text {
+      color: #166534;
+    }
+
+    .message-box.error .message-text {
+      color: #991b1b;
+    }
+
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .user-section {
+        flex-direction: column;
+      }
+
+      .form-actions {
+        justify-content: stretch;
+      }
+
+      .submit-button {
+        width: 100%;
+      }
+    }
+  `]
 })
 export class AdminComponent implements OnInit {
   user: User | null;
@@ -314,8 +466,6 @@ export class AdminComponent implements OnInit {
   submitMessage = '';
   submitSuccess = false;
   activeTab = 'movies';
-  recentMovies: Movie[] = [];
-  recentBooks: Book[] = [];
 
   constructor(
     private authService: AuthService,
@@ -330,7 +480,11 @@ export class AdminComponent implements OnInit {
       title: ['', Validators.required],
       cast: ['', Validators.required],
       description: ['', Validators.required],
-      release_year: ['', [Validators.required, Validators.min(1888), Validators.max(new Date().getFullYear() + 5)]],
+      release_year: ['', [
+        Validators.required, 
+        Validators.min(1888), 
+        Validators.max(new Date().getFullYear() + 5)
+      ]],
       genre: ['', Validators.required]
     });
 
@@ -339,7 +493,11 @@ export class AdminComponent implements OnInit {
       title: ['', Validators.required],
       author: ['', Validators.required],
       description: ['', Validators.required],
-      publish_year: ['', [Validators.required, Validators.min(1000), Validators.max(new Date().getFullYear() + 5)]],
+      publish_year: ['', [
+        Validators.required, 
+        Validators.min(1000), 
+        Validators.max(new Date().getFullYear() + 5)
+      ]],
       genre: ['', Validators.required]
     });
   }
@@ -352,40 +510,6 @@ export class AdminComponent implements OnInit {
       }
       this.user = state.user;
     });
-
-    this.loadRecentItems();
-  }
-
-  loadRecentItems() {
-    if (this.activeTab === 'movies') {
-      this.loadRecentMovies();
-    } else {
-      this.loadRecentBooks();
-    }
-  }
-
-  loadRecentMovies() {
-    this.adminService.getRecentMovies().subscribe({
-      next: (movies) => {
-        this.recentMovies = movies;
-      },
-      error: (error) => {
-        console.error('Error loading recent movies:', error);
-        this.showError('Failed to load recent movies');
-      }
-    });
-  }
-
-  loadRecentBooks() {
-    this.adminService.getRecentBooks().subscribe({
-      next: (books) => {
-        this.recentBooks = books;
-      },
-      error: (error) => {
-        console.error('Error loading recent books:', error);
-        this.showError('Failed to load recent books');
-      }
-    });
   }
 
   onMovieSubmit() {
@@ -396,14 +520,14 @@ export class AdminComponent implements OnInit {
       const formValue = this.movieForm.value;
       const movie: Movie = {
         ...formValue,
-        cast: formValue.cast.split(',').map((name: string) => name.trim()).filter((name: string) => name)
+        cast: formValue.cast.split(',').map((name: string) => name.trim())
+          .filter((name: string) => name)
       };
 
       this.adminService.addMovie(movie).subscribe({
         next: () => {
           this.showSuccess('Movie added successfully!');
           this.movieForm.reset();
-          this.loadRecentMovies();
         },
         error: (error) => {
           console.error('Error adding movie:', error);
@@ -426,7 +550,6 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.showSuccess('Book added successfully!');
           this.bookForm.reset();
-          this.loadRecentBooks();
         },
         error: (error) => {
           console.error('Error adding book:', error);
@@ -448,12 +571,22 @@ export class AdminComponent implements OnInit {
     this.isSubmitting = false;
     this.submitSuccess = true;
     this.submitMessage = message;
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      this.clearMessage();
+    }, 3000);
   }
 
   showError(message: string) {
     this.isSubmitting = false;
     this.submitSuccess = false;
     this.submitMessage = message;
+    
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      this.clearMessage();
+    }, 5000);
   }
 
   clearMessage() {
