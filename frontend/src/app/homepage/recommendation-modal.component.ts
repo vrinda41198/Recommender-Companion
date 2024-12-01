@@ -56,7 +56,7 @@ import { Recommendation, isMovieRecommendation, isBookRecommendation } from '../
           <!-- Empty State -->
           <div *ngIf="!isLoading && filteredRecommendations.length === 0" class="empty-state">
             <h3>No recommendations found</h3>
-            <p>Try switching to a different category or generate new recommendations.</p>
+            <p>Try switching to a different category.</p>
           </div>
         </div>
 
