@@ -2,23 +2,43 @@
 
 ## Prerequisites
 
-- Docker
-- Docker Compose
+- Docker Desktop
+- Python 3.8 or higher
 
 ## Quick Start
 
 1. Clone the repository
-2. Start the application:
+2. Get the Microsoft Azure credentials:
+   - Tenant ID
+   - Client ID
+   - Client Secret
+3. Start the application using the provided script:
 ```bash
-docker-compose up --build
+# Windows
+python start.py <tenant_id> <client_id> <client_secret>
+
+# Linux/MacOS
+python3 start.py <tenant_id> <client_id> <client_secret>
+```
+
+For help with the startup script:
+```bash
+python start.py --help
 ```
 
 The application will be available at http://localhost:5000
 
+
 ## API Endpoints
 
-- `GET /health`: Health check endpoint
-- `POST /login`: Simple login endpoint (returns 200 OK)
+- `GET /api/health`: Health check endpoint
+- `GET /api/auth/login`: Initiate Microsoft OAuth login
+- `POST /api/auth/callback`: Handle OAuth callback
+- `GET /api/auth/user`: Get current user information
+- `GET /api/auth/logout`: Logout user
+- `GET /api/listings`: Get movies and books
+- `POST /api/movies`: Add new movie (admin only)
+- `POST /api/books`: Add new book (admin only)
 
 ## Database Migrations
 
@@ -34,23 +54,17 @@ Database migrations are handled by Flyway and run automatically on startup. To a
 2. The Flask development server will automatically reload
 3. For database changes, add new migration files in `sql/` directory
 
-## Environment Variables
+## Security Notes
 
-Set in `.env` file:
-- `FLASK_APP`: Flask application entry point
-- `FLASK_ENV`: Development environment
-- `FLASK_DEBUG`: Enable debug mode
-- `DATABASE_URL`: MySQL connection string
-- `MYSQL_ROOT_PASSWORD`: MySQL root password
-- `MYSQL_DATABASE`: Database name
-- `MYSQL_USER`: Database user
-- `MYSQL_PASSWORD`: Database password
+1. Keep the Microsoft credentials secure
+2. Regularly rotate your client secret
+3. Use appropriate access controls in Azure AD
 
 ## Container Management
 
 ```bash
-# Start containers
-docker-compose up
+# Start containers with credentials
+python start.py <tenant_id> <client_id> <client_secret>
 
 # Stop containers and remove volumes
 docker-compose down -v
@@ -59,5 +73,5 @@ docker-compose down -v
 docker-compose logs
 
 # Access MySQL shell
-docker-compose exec db mysql -uuser -ppassword demo_db
+docker-compose exec db mysql -uuser -ppassword rc_db
 ```
