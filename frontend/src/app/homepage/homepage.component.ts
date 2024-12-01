@@ -6,12 +6,13 @@ import { Router } from '@angular/router';
 import { AuthService, AuthState } from '../services/auth.service';
 import { Observable } from 'rxjs';
 import { AddItemModalComponent } from './add-item-modal.component';
+import { RecommendationModalComponent } from './recommendation-modal.component';
 import { Movie, Book, Review, isMovie, isBook } from '../models';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [FormsModule, CommonModule, AddItemModalComponent],
+  imports: [FormsModule, CommonModule, AddItemModalComponent, RecommendationModalComponent],
   template: `
     <div class="container">
       <!-- Header -->
@@ -59,6 +60,13 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
             placeholder="Search for movies and books..."
             class="search-input"
           >
+        </div>
+
+        <div class="recommendation-button-container">
+        <button (click)="showRecommendations()" class="recommendation-button">
+          <span class="icon">✨</span>
+          Generate Recommendations
+        </button>
         </div>
 
         <!-- Action Buttons -->
@@ -121,6 +129,10 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
           (close)="handleModalClose()"
           (submit)="handleModalSubmit($event)"
         ></app-add-item-modal>
+        <app-recommendation-modal
+          *ngIf="showRecommendationModal"
+          (close)="handleRecommendationModalClose()"
+        ></app-recommendation-modal>
       </main>
     </div>
   `,
@@ -374,6 +386,30 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
       margin-bottom: 0.5rem;
     }
 
+    .recommendation-button-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .recommendation-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #8b5cf6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .recommendation-button:hover {
+      background-color: #7c3aed;
+    }
+
     @media (max-width: 768px) {
       .results-grid {
         grid-template-columns: 1fr;
@@ -400,6 +436,7 @@ export class HomepageComponent implements OnInit {
   showOptions: number | null = null;
   showModal = false;
   modalType: 'movie' | 'book' = 'movie';
+  showRecommendationModal = false;
 
   // Make type guards available in template
   isMovie = isMovie;
@@ -500,5 +537,13 @@ export class HomepageComponent implements OnInit {
         console.error('Error submitting review:', error);
       }
     });
+  }
+
+  showRecommendations() {
+    this.showRecommendationModal = true;
+  }
+  
+  handleRecommendationModalClose() {
+    this.showRecommendationModal = false;
   }
 }

@@ -273,7 +273,7 @@ export class AddItemModalComponent {
   }
 
   onSearch() {
-    if (this.searchQuery.trim().length < 2) {
+    if (this.searchQuery.trim().length < 1) {
       this.searchResults = [];
       return;
     }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Movie, Book, ApiResponse, Review } from '../models';
+import { Movie, Book, ApiResponse, Review, Recommendation } from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -46,5 +46,9 @@ export class ApiService {
 
   updateItem(id: number, type: string, data: Partial<Movie | Book>): Observable<any> {
     return this.http.put(`${this.baseUrl}/${type}s/${id}`, data);
+  }
+
+  generateRecommendations(): Observable<Recommendation[]> {
+    return this.http.get<Recommendation[]>(`${this.baseUrl}/generate-recommendation`);
   }
 }
