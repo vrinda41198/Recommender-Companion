@@ -24,7 +24,7 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
           <!-- User Info & Controls -->
           <div class="user-section" *ngIf="authState$ | async as authState">
             <div class="user-info">
-              <span class="user-name">{{authState.user?.displayName}}</span>
+              <span class="user-name">Welcome, {{authState.user?.displayName}}</span>
             </div>
             
             <a *ngIf="authState.isAdmin" 
