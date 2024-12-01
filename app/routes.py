@@ -12,7 +12,7 @@ def health_check():
 @main.route('/api/listings', methods=['GET'])
 @user_required
 def get_listings():
-    tab_type = request.args.get('tab_type', '')
+    tab_type = request.args.get('type', '')
     search_query = request.args.get('search', '').lower()
     
     # Query based on type
