@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Movie, Book, ApiResponse, Review } from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -10,19 +11,40 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  login(): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/login`, {});
+  getListings(type: string, page: number, searchGlobal = false, query = ''): Observable<ApiResponse<Movie | Book>> {
+    let params = new HttpParams()
+      .set('type', type)
+      .set('page', page.toString());
+    
+    if (searchGlobal) {
+      params = params.set('search_global', 'true');
+    }
+    
+    if (query) {
+      params = params.set('query', query);
+    }
+  
+    return this.http.get<ApiResponse<Movie | Book>>(`${this.baseUrl}/listings`, { params });
   }
 
-  getListings(tabType: string, globalSearch: number): Observable<any> {
-    const queryParams = [
-      tabType ? `tab_type=${tabType}` : '',
-      `globalsearch=${globalSearch}`,
-    ]
-      .filter(Boolean)
-      .join('&');
+  submitReview(review: Review): Observable<any> {
+    return this.http.post(`${this.baseUrl}/reviews`, review);
+  }
 
-    const url = `${this.baseUrl}/listings?${queryParams}`;
-    return this.http.get<any>(url);
+  // If you have these endpoints
+  addMovie(movie: Movie): Observable<Movie> {
+    return this.http.post<Movie>(`${this.baseUrl}/movies`, movie);
+  }
+
+  addBook(book: Book): Observable<Book> {
+    return this.http.post<Book>(`${this.baseUrl}/books`, book);
+  }
+
+  deleteItem(id: number, type: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${type}s/${id}`);
+  }
+
+  updateItem(id: number, type: string, data: Partial<Movie | Book>): Observable<any> {
+    return this.http.put(`${this.baseUrl}/${type}s/${id}`, data);
   }
 }

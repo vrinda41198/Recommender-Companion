@@ -5,11 +5,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, AuthState } from '../services/auth.service';
 import { Observable } from 'rxjs';
+import { AddItemModalComponent } from './add-item-modal.component';
+import { Movie, Book, Review, isMovie, isBook } from '../models';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, AddItemModalComponent],
   template: `
     <div class="container">
       <!-- Header -->
@@ -59,6 +61,18 @@ import { Observable } from 'rxjs';
           >
         </div>
 
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button (click)="showAddModal('movie')" class="action-button watched">
+            <span class="icon">📽</span>
+            Add Watched Movie
+          </button>
+          <button (click)="showAddModal('book')" class="action-button read">
+            <span class="icon">📚</span>
+            Add Read Book
+          </button>
+        </div>
+
         <!-- Results Grid -->
         <div class="results-grid">
           <div *ngFor="let item of filteredResults; let i = index" class="item-card">
@@ -70,17 +84,17 @@ import { Observable } from 'rxjs';
                   <button (click)="toggleOptions(i)" class="options-button">⋮</button>
                   
                   <div *ngIf="showOptions === i" class="options-dropdown">
-                    <button (click)="updateItem(item)" class="dropdown-item">Updtae</button>
+                    <button (click)="updateItem(item)" class="dropdown-item">Update</button>
                     <button (click)="deleteItem(item)" class="dropdown-item delete">Delete</button>
                   </div>
                 </div>
               </div>
               
               <div class="item-details">
-                <p *ngIf="item.author" class="detail-row">
+                <p *ngIf="isBook(item)" class="detail-row">
                   <span class="label">Author:</span> {{item.author}}
                 </p>
-                <p *ngIf="item.cast" class="detail-row">
+                <p *ngIf="isMovie(item)" class="detail-row">
                   <span class="label">Cast:</span> {{item.cast.join(', ')}}
                 </p>
                 <p class="detail-row">
@@ -99,6 +113,14 @@ import { Observable } from 'rxjs';
           <h3>No results found</h3>
           <p>Try adjusting your search term.</p>
         </div>
+
+        <!-- Modal -->
+        <app-add-item-modal
+          *ngIf="showModal"
+          [itemType]="modalType"
+          (close)="handleModalClose()"
+          (submit)="handleModalSubmit($event)"
+        ></app-add-item-modal>
       </main>
     </div>
   `,
@@ -207,6 +229,47 @@ import { Observable } from 'rxjs';
       outline: none;
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .action-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .action-button.watched {
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    .action-button.watched:hover {
+      background-color: #2563eb;
+    }
+
+    .action-button.read {
+      background-color: #10b981;
+      color: white;
+    }
+
+    .action-button.read:hover {
+      background-color: #059669;
+    }
+
+    .icon {
+      font-size: 1.25rem;
     }
 
     .results-grid {
@@ -329,13 +392,18 @@ import { Observable } from 'rxjs';
   `]
 })
 export class HomepageComponent implements OnInit {
-  // Component logic remains the same
   authState$: Observable<AuthState>;
   activeTab: string = 'all';
-  results: any[] = [];
+  results: (Movie | Book)[] = [];
   searchQuery: string = '';
-  filteredResults: any[] = [];
+  filteredResults: (Movie | Book)[] = [];
   showOptions: number | null = null;
+  showModal = false;
+  modalType: 'movie' | 'book' = 'movie';
+
+  // Make type guards available in template
+  isMovie = isMovie;
+  isBook = isBook;
 
   constructor(
     private apiService: ApiService,
@@ -358,8 +426,8 @@ export class HomepageComponent implements OnInit {
     }
 
     this.apiService.getListings(tabType, 0).subscribe({
-      next: (data) => {
-        this.results = data.data || [];
+      next: (response) => {
+        this.results = response.data || [];
         this.applySearchFilter();
       },
       error: (error) => {
@@ -385,14 +453,22 @@ export class HomepageComponent implements OnInit {
     this.showOptions = this.showOptions === index ? null : index;
   }
 
-  updateItem(item: any) {
+  updateItem(item: Movie | Book) {
     console.log('Update item:', item);
     // Implement update logic
   }
 
-  deleteItem(item: any) {
-    console.log('Delete item:', item);
-    // Implement delete logic
+  deleteItem(item: Movie | Book) {
+    if (item.id) {
+      this.apiService.deleteItem(item.id, item.type).subscribe({
+        next: () => {
+          this.fetchResults();
+        },
+        error: (error) => {
+          console.error('Error deleting item:', error);
+        }
+      });
+    }
   }
 
   navigateToAdmin() {
@@ -400,7 +476,29 @@ export class HomepageComponent implements OnInit {
   }
 
   logout() {
-    this.authService.logout().subscribe();
+    this.authService.logout().subscribe(() => {
+      this.router.navigate(['/login']);
+    });
   }
 
+  showAddModal(type: 'movie' | 'book') {
+    this.modalType = type;
+    this.showModal = true;
+  }
+
+  handleModalClose() {
+    this.showModal = false;
+  }
+
+  handleModalSubmit(review: Review) {
+    this.apiService.submitReview(review).subscribe({
+      next: () => {
+        this.showModal = false;
+        this.fetchResults();
+      },
+      error: (error) => {
+        console.error('Error submitting review:', error);
+      }
+    });
+  }
 }
