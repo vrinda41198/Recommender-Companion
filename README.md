@@ -4,8 +4,10 @@
 
 - Docker Desktop
 - Python 3.8 or higher
+- Node.js
+- Angular CLI
 
-## Quick Start
+## Running the Backend
 
 1. Clone the repository
 2. Get the Microsoft Azure credentials:
@@ -27,6 +29,22 @@ python start.py --help
 ```
 
 The application will be available at http://localhost:5000
+
+## Running the Frontend
+
+To run the frontend application:
+
+1. Navigate to the frontend repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the frontend application:
+   ```bash
+   npm start
+   ```
+
+The frontend will be available at http://localhost:4200/ by default. Ensure the backend is running before accessing the frontend for full functionality.
 
 
 ## API Endpoints
