@@ -42,6 +42,21 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
 
       <!-- Main Content -->
       <main class="main-content">
+        <div class="action-buttons">
+          <button (click)="showAddModal('movie')" class="action-button movie">
+            <span class="icon">📽</span>
+            Add Watched Movie
+          </button>
+          <button (click)="showRecommendations()" class="action-button recommend">
+            <span class="icon">✨</span>
+            Generate Recommendations
+          </button>
+          <button (click)="showAddModal('book')" class="action-button book">
+            <span class="icon">📚</span>
+            Add Read Book
+          </button>
+        </div>
+
         <!-- Tabs -->
         <div class="tabs-container">
           <button *ngFor="let tab of ['all', 'movies', 'books']"
@@ -60,25 +75,6 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
             placeholder="Search for movies and books..."
             class="search-input"
           >
-        </div>
-
-        <div class="recommendation-button-container">
-        <button (click)="showRecommendations()" class="recommendation-button">
-          <span class="icon">✨</span>
-          Generate Recommendations
-        </button>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <button (click)="showAddModal('movie')" class="action-button watched">
-            <span class="icon">📽</span>
-            Add Watched Movie
-          </button>
-          <button (click)="showAddModal('book')" class="action-button read">
-            <span class="icon">📚</span>
-            Add Read Book
-          </button>
         </div>
 
         <!-- Results Grid -->
@@ -247,7 +243,8 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
       display: flex;
       justify-content: center;
       gap: 1rem;
-      margin-bottom: 2rem;
+      margin: 2rem 0;
+      padding: 0 1rem;
     }
 
     .action-button {
@@ -259,24 +256,40 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
       border-radius: 4px;
       font-weight: 500;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
+      min-width: 200px;
+      justify-content: center;
     }
 
-    .action-button.watched {
+    .action-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-button.movie {
       background-color: #3b82f6;
       color: white;
     }
 
-    .action-button.watched:hover {
+    .action-button.movie:hover {
       background-color: #2563eb;
     }
 
-    .action-button.read {
+    .action-button.recommend {
+      background-color: #8b5cf6;
+      color: white;
+    }
+
+    .action-button.recommend:hover {
+      background-color: #7c3aed;
+    }
+
+    .action-button.book {
       background-color: #10b981;
       color: white;
     }
 
-    .action-button.read:hover {
+    .action-button.book:hover {
       background-color: #059669;
     }
 
