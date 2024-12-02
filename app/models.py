@@ -51,3 +51,19 @@ class Book(db.Model):
             'genre': self.genre,
             'type': 'book'
         }
+
+class MoviesWatched(db.Model):
+    __tablename__ = 'movies_watched_yukti'
+    
+    uuid = db.Column(db.String(36), primary_key=True)  
+    email = db.Column(db.String(255), nullable=False)  
+    movie_id = db.Column(db.Integer, nullable=False)  
+    user_rating = db.Column(db.Integer, nullable=True)
+
+    def to_dict(self):
+        return {
+            'uuid': self.uuid,
+            'email': self.email,
+            'movie_id': self.movie_id,
+            'user_rating': self.user_rating
+               }

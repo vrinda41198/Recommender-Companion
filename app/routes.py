@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.models import User, Movie, Book
+from app.models import User, Movie, Book, MoviesWatched
 from app import db
 from app.middleware import user_required, admin_required
 from uuid import uuid4
@@ -101,49 +101,119 @@ def add_book():
         "status": "success",
         "data": book.to_dict()
     }), 201
+    
+from sqlalchemy.sql import text
+
+# @main.route('/api/users/movies', methods=['POST'])
+
+# def add_movie_to_user():
+#     data = request.get_json()
+
+#     # Handle search functionality
+#     if 'query' in data:
+#         query = data['query'].strip().lower()
+#         if not query:
+#             return jsonify({'error': 'Search query cannot be empty'}), 400
+
+#         sql = text("SELECT * FROM movie WHERE title ILIKE :search_query")
+#         matching_movies = db.session.execute(sql, {'search_query': f"%{query}%"}).fetchall()
+
+#         results = [dict(row) for row in matching_movies]
+
+#         return jsonify({
+#             "status": "success",
+#             "data": results
+#         }), 200
+
+#     required_fields = ['id', 'title']
+#     if not all(field in data for field in required_fields):
+#         return jsonify({'error': 'Missing required fields'}), 400
+
+
+#     user_email = "ysh@gmail.com"
+
+#     check_sql = text("""
+#         SELECT * FROM movies_watched_yukti WHERE email = :email AND movie_id = :movie_id
+#     """)
+#     existing_entry = db.session.execute(check_sql, {'email': user_email, 'movie_id': data['id']}).fetchone()
+
+#     if existing_entry:
+#         return jsonify({'error': 'Movie is already present in the database for this user. Cannot enter again.'}), 400
+
+#     insert_sql = text("""
+#         INSERT INTO movies_watched_yukti (uuid, email, movie_id, user_rating)
+#         VALUES (:uuid, :email, :movie_id, :user_rating)
+#     """)
+#     new_entry = {
+#         'uuid': str(uuid4()),
+#         'email': user_email,
+#         'movie_id': data['id'],
+#         'user_rating': None
+#     }
+
+#     db.session.execute(insert_sql, new_entry)
+#     db.session.commit()
+
+#     return jsonify({
+#         "status": "success",
+#         "message": f"Movie '{data['title']}' has been added to the user's database.",
+#         "data": new_entry
+#     }), 201
 
 @main.route('/api/users/movies', methods=['POST'])
 #@user_required
 def add_movie_to_user():
+    
     data = request.get_json()
 
-    required_fields = ['id', 'title', 'release_date', 'original_language', 'genres', 'cast', 'director', 'poster_path']
+    if 'query' in data:  
+        query = data['query'].strip().lower()
+        if not query:
+            return jsonify({'error': 'Search query cannot be empty'}), 400
+
+        matching_movies = Movie.query.filter(Movie.title.ilike(f"%{query}%")).all()
+        results = [movie.to_dict() for movie in matching_movies]
+
+        return jsonify({
+            "status": "success",
+            "data": results
+        }), 200
+
+    required_fields = ['id', 'title']
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
+
 
     #user_email = request.token_data.get('email') or request.token_data.get('preferred_username')
     user_email = "ysh@gmail.com"
 
-    existing_entry = db.session.execute(
-    text("SELECT * FROM movies_watched_yukti WHERE email = :email AND movie_id = :movie_id"),
-    {'email': user_email, 'movie_id': data['id']}
-    ).fetchone()
+    existing_entry = MoviesWatched.query.filter_by(email=user_email, movie_id=data['id']).first()
 
     if existing_entry:
         return jsonify({'error': 'Movie is already present in the database for this user. Cannot enter again.'}), 400
 
-    new_entry = {
-        'uuid': str(uuid4()),
-        'email': user_email,
-        'movie_id': data['id'],
-        'user_rating': None
-    }
-
-    db.session.execute(
-    text("""
-        INSERT INTO movies_watched_yukti (uuid, email, movie_id, user_rating)
-        VALUES (:uuid, :email, :movie_id, :user_rating)
-    """),
-    new_entry
+    new_entry = MoviesWatched(
+        uuid=str(uuid4()),
+        email=user_email,
+        movie_id=data['id'],
+        user_rating=None
     )
 
+    db.session.add(new_entry)
     db.session.commit()
 
     return jsonify({
         "status": "success",
         "message": f"Movie '{data['title']}' has been added to the user's database.",
-        "data": new_entry
+        "data": {
+            "uuid": new_entry.uuid,
+            "email": new_entry.email,
+            "movie_id": new_entry.movie_id,
+            "user_rating": new_entry.user_rating
+        }
     }), 201
+
+
 
 
 @main.errorhandler(404)
