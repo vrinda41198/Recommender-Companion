@@ -11,6 +11,8 @@ class User(db.Model):
         return f'<User {self.username}>'
 
 class Movie(db.Model):
+    __tablename__ = 'movie_glb_yukti'
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     cast = db.Column(db.JSON, nullable=False)  # Store cast as JSON array
@@ -54,7 +56,7 @@ class Book(db.Model):
 
 class MoviesWatched(db.Model):
     __tablename__ = 'movies_watched_yukti'
-    
+
     uuid = db.Column(db.String(36), primary_key=True)  
     email = db.Column(db.String(255), nullable=False)  
     movie_id = db.Column(db.Integer, nullable=False)  

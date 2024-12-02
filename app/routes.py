@@ -172,6 +172,10 @@ def add_movie_to_user():
             return jsonify({'error': 'Search query cannot be empty'}), 400
 
         matching_movies = Movie.query.filter(Movie.title.ilike(f"%{query}%")).all()
+        
+        if not matching_movies:
+        return jsonify({'error': 'This movie is not present in the global database.'}), 404
+
         results = [movie.to_dict() for movie in matching_movies]
 
         return jsonify({
