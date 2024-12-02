@@ -2,6 +2,9 @@ from flask import Blueprint, jsonify, request
 from app.models import User, Movie, Book
 from app import db
 from app.middleware import user_required, admin_required
+from uuid import uuid4
+from sqlalchemy.sql import text
+
 
 main = Blueprint('main', __name__)
 
@@ -98,6 +101,50 @@ def add_book():
         "status": "success",
         "data": book.to_dict()
     }), 201
+
+@main.route('/api/users/movies', methods=['POST'])
+#@user_required
+def add_movie_to_user():
+    data = request.get_json()
+
+    required_fields = ['id', 'title', 'release_date', 'original_language', 'genres', 'cast', 'director', 'poster_path']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    #user_email = request.token_data.get('email') or request.token_data.get('preferred_username')
+    user_email = "ysh@gmail.com"
+
+    existing_entry = db.session.execute(
+    text("SELECT * FROM movies_watched_yukti WHERE email = :email AND movie_id = :movie_id"),
+    {'email': user_email, 'movie_id': data['id']}
+    ).fetchone()
+
+    if existing_entry:
+        return jsonify({'error': 'Movie is already present in the database for this user. Cannot enter again.'}), 400
+
+    new_entry = {
+        'uuid': str(uuid4()),
+        'email': user_email,
+        'movie_id': data['id'],
+        'user_rating': None
+    }
+
+    db.session.execute(
+    text("""
+        INSERT INTO movies_watched_yukti (uuid, email, movie_id, user_rating)
+        VALUES (:uuid, :email, :movie_id, :user_rating)
+    """),
+    new_entry
+    )
+
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Movie '{data['title']}' has been added to the user's database.",
+        "data": new_entry
+    }), 201
+
 
 @main.errorhandler(404)
 def not_found_error(error):
