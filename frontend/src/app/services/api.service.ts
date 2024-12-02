@@ -48,6 +48,10 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/${type}s/${id}`, data);
   }
 
+  addListing(item: { id: number; title: string; type: string; genre?: string; author?: string }) {
+    return this.http.post('/api/listings', item);
+  }
+
   generateRecommendations(): Observable<Recommendation[]> {
     return this.http.get<Recommendation[]>(`${this.baseUrl}/generate-recommendation`);
   }

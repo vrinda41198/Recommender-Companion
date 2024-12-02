@@ -300,14 +300,39 @@ export class AddItemModalComponent {
 
   submitReview() {
     if (!this.canSubmit || !this.selectedItem) return;
-
-    const review: Review = {
-      itemId: this.selectedItem.id!,
-      itemType: this.itemType,
-      rating: this.rating,
-      review: this.review.trim()
+  
+    // Prepare the item data to be added to the API
+    const itemData = {
+      id: this.selectedItem.id!, // Use 'id' instead of 'itemId'
+      title: this.selectedItem.title,
+      type: this.itemType,
+      genre: isMovie(this.selectedItem) ? this.selectedItem.genre : undefined,
+      author: isBook(this.selectedItem) ? this.selectedItem.author : undefined,
     };
-
-    this.submit.emit(review);
+  
+    // Add item details to the API
+    this.addItemToApi(itemData).subscribe({
+      next: () => {
+        const review: Review = {
+          itemId: this.selectedItem!.id!,
+          itemType: this.itemType,
+          rating: this.rating,
+          review: this.review.trim(),
+        };
+        // Emit the review after successfully adding item details
+        this.submit.emit(review);
+      },
+      error: (error) => {
+        console.error('Error adding item to API:', error);
+      }
+    });
   }
+  
+  addItemToApi(itemData: { id: number; title: string; type: "movie" | "book"; genre: string | undefined; author: string | undefined; }) {
+    return this.apiService.addListing(itemData); // Make API call
+  }
+  
+ 
+  
+  
 }
