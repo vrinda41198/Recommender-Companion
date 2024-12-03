@@ -11,7 +11,7 @@ class User(db.Model):
         return f'<User {self.username}>'
 
 class Movie(db.Model):
-    __tablename__ = 'movie_glb_yukti'
+    __tablename__ = 'movie'
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -55,7 +55,7 @@ class Book(db.Model):
         }
 
 class MoviesWatched(db.Model):
-    __tablename__ = 'movies_watched_yukti'
+    __tablename__ = 'movies_watched'
 
     uuid = db.Column(db.String(36), primary_key=True)  
     email = db.Column(db.String(255), nullable=False)  
