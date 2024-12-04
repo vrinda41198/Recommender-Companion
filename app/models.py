@@ -13,8 +13,8 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-class Movie(db.Model):
-    __tablename__ = 'movie'
+class Movies(db.Model):
+    __tablename__ = 'movies'
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
