@@ -1,11 +1,14 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class User(db.Model):
+    __tablename__ = 'rc_user'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    display_name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    age = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -14,58 +17,57 @@ class Movie(db.Model):
     __tablename__ = 'movie'
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    cast = db.Column(db.JSON, nullable=False)  # Store cast as JSON array
-    description = db.Column(db.Text)
-    release_year = db.Column(db.Integer)
-    genre = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.String(120))  # Store email of creator
+    title = db.Column(db.String(255), nullable=False)
+    release_date = db.Column(db.Date)
+    original_language = db.Column(db.String(2))
+    genres = db.Column(db.Text)
+    cast = db.Column(db.Text)
+    director = db.Column(db.String(700))
+    poster_path = db.Column(db.String(255))
 
     def to_dict(self):
         return {
             'id': self.id,
             'title': self.title,
+            'release_date': self.release_date,
+            'original_language': self.original_language,
+            'genres': self.genres,
             'cast': self.cast,
-            'description': self.description,
-            'release_year': self.release_year,
-            'genre': self.genre,
+            'director': self.director,
+            'poster_path': self.poster_path,
             'type': 'movie'
         }
 
-class Book(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    author = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    publish_year = db.Column(db.Integer)
-    genre = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.String(120))  # Store email of creator
+class Books(db.Model):
+    __tablename__ = 'books'
+    isbn = db.Column(db.BigInteger, primary_key=True)
+    book_title = db.Column(db.String(260), nullable=False)  # Corrected to 'book_title'
+    book_author = db.Column(db.String(255), nullable=False)  # Matches SQL schema
+    year_of_publication = db.Column(db.Integer)  # Matches SQL schema
+    image_url_s = db.Column(db.Text)  # Matches SQL schema
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'title': self.title,
-            'author': self.author,
-            'description': self.description,
-            'publish_year': self.publish_year,
-            'genre': self.genre,
+            'isbn': self.isbn,
+            'book_title': self.book_title,  # Corrected to 'book_title'
+            'book_author': self.book_author,
+            'year_of_publication': self.year_of_publication,
+            'image_url_s': self.image_url_s,
             'type': 'book'
         }
 
-class MoviesWatched(db.Model):
-    __tablename__ = 'movies_watched'
+class UserBooksRead(db.Model):
+    __tablename__ = 'user_books_read'
 
-    uuid = db.Column(db.String(36), primary_key=True)  
-    email = db.Column(db.String(255), nullable=False)  
-    movie_id = db.Column(db.Integer, nullable=False)  
-    user_rating = db.Column(db.Integer, nullable=True)
+    uuid = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), db.ForeignKey('user.email'), nullable=False)
+    isbn = db.Column(db.BigInteger, db.ForeignKey('books.isbn'), nullable=False)
+    user_rating = db.Column(db.Integer)
 
-    def to_dict(self):
-        return {
-            'uuid': self.uuid,
-            'email': self.email,
-            'movie_id': self.movie_id,
-            'user_rating': self.user_rating
-               }
+class UserMoviesWatched(db.Model):
+    __tablename__ = 'user_movies_watched'
+
+    uuid = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), db.ForeignKey('user.email'), nullable=False)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False)
+    user_rating = db.Column(db.Integer)
