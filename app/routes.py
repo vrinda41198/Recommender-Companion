@@ -16,7 +16,7 @@ def health_check():
 @user_required
 def get_listings():
     tab_type = request.args.get('type', '')
-    search_query = request.args.get('search', '').lower()
+    search_query = request.args.get('query', '').lower()
     
     # Query based on type
     if tab_type == 'movie':
