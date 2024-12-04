@@ -80,9 +80,13 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
         <!-- Results Grid -->
         <div class="results-grid">
           <div *ngFor="let item of filteredResults; let i = index" class="item-card">
+           <!-- Card Image -->
+              <img *ngIf="isBook(item)" [src]="item.image_url_s" alt="Book Cover" class="card-image">
+              <img *ngIf="isMovie(item)" [src]="'https://image.tmdb.org/t/p/w500' + item.poster_path" alt="Movie Poster" class="card-image">
             <div class="card-content">
               <div class="card-header">
-                <h3 class="item-title">{{item.title}}</h3>
+                 <h3 class="item-title">{{ isBook(item) ? item.book_title : item.title }}</h3>
+                
                 <!-- Options Menu -->
                 <div class="options-menu">
                   <button (click)="toggleOptions(i)" class="options-button">⋮</button>
@@ -95,18 +99,27 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
               </div>
               
               <div class="item-details">
+
+                <p class="detail-row">
+                  <span class="detail-row"><strong>Type: </strong></span> {{item.type | titlecase}}
+                </p>
+
+
                 <p *ngIf="isBook(item)" class="detail-row">
-                  <span class="label">Author:</span> {{item.author}}
+                  <span class="detail-row"><strong>Author: </strong></span> {{item.book_author}}
                 </p>
-                <p *ngIf="isMovie(item)" class="detail-row">
-                  <span class="label">Cast:</span> {{item.cast.join(', ')}}
+
+                 <p *ngIf="isBook(item)" class="detail-row">
+                  <span class="detail-row"><strong>Year of publication: </strong></span> {{item.year_of_publication}}
                 </p>
-                <p class="detail-row">
-                  <span class="label">Type:</span> {{item.type | titlecase}}
-                </p>
-                <p class="detail-row">
-                  <span class="label">Genre:</span> {{item.genre}}
-                </p>
+
+              
+                
+                <p *ngIf="isMovie(item)" class="detail-row"><strong>Director: </strong>{{ item.director }}</p>
+                <p *ngIf="isMovie(item)" class="detail-row"><strong>Language: </strong>{{ item.original_language }}</p>
+                <p *ngIf="isMovie(item)" class="detail-row"><strong>Release Date: </strong>{{ item.release_date }}</p>
+                <p *ngIf="isMovie(item)" class="detail-row"><strong>Genres: </strong> {{ item.genres }}</p>
+               
               </div>
             </div>
           </div>
@@ -317,6 +330,16 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
     .card-content {
       padding: 1.5rem;
     }
+    
+    .card-image {
+        width: 50%; /* Increase the width to make the image occupy more space */
+        max-height: 140px; /* Increase the maximum height for larger images */
+        align: centre;
+        margin-bottom: 1rem; /* Keep spacing below the image */
+        margin: 0 auto; /* Center horizontally */
+        display: block; /* Necessary to center inline elements like <img> with margin auto */
+        border-radius: 4px; /* Optional: Rounds the image corners */
+    }
 
     .card-header {
       display: flex;
@@ -475,7 +498,7 @@ export class HomepageComponent implements OnInit {
       tabType = 'movie';
     }
 
-    this.apiService.getListings(tabType, 0).subscribe({
+    this.apiService.getListings(tabType, false, this.searchQuery).subscribe({
       next: (response) => {
         this.results = response.data || [];
         this.applySearchFilter();
@@ -494,9 +517,11 @@ export class HomepageComponent implements OnInit {
 
   applySearchFilter() {
     const lowerCaseQuery = this.searchQuery.toLowerCase();
-    this.filteredResults = this.results.filter((item) =>
-      item.title.toLowerCase().includes(lowerCaseQuery)
-    );
+  
+    this.filteredResults = this.results.filter((item) => {
+      const itemTitle = item.title?.toLowerCase() || item.book_title?.toLowerCase() || '';
+      return itemTitle.includes(lowerCaseQuery);
+    });
   }
 
   toggleOptions(index: number) {

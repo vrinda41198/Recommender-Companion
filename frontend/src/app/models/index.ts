@@ -2,9 +2,8 @@
 export interface BaseItem {
     id?: number;
     title: string;
-    description: string;
-    genre: string;
     type: string;
+    book_title: string;
 }
 
 // Base interface for recommendations
@@ -18,15 +17,22 @@ export interface BaseRecommendation {
 }
 
 export interface Movie extends BaseItem {
-    cast: string[];
     release_year: number;
     type: 'movie';
+    cast: string[];
+    director: string;
+    genres: string[],
+    original_language: string;
+    poster_path: string;
+    release_date: string
 }
 
 export interface Book extends BaseItem {
-    author: string;
-    publish_year: number;
-    type: 'book';
+    book_author: string;
+    book_title: string;
+    image_url_s: string;
+    isbn: number;
+    year_of_publication: number
 }
 
 export interface MovieRecommendation extends BaseRecommendation {

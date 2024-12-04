@@ -11,10 +11,11 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  getListings(type: string, page: number, searchGlobal = false, query = ''): Observable<ApiResponse<Movie | Book>> {
+  getListings(type: string,  searchGlobal: boolean, query: string): Observable<ApiResponse<Movie | Book>> {
     let params = new HttpParams()
       .set('type', type)
-      .set('page', page.toString());
+      .set('search_global', searchGlobal)
+    
     
     if (searchGlobal) {
       params = params.set('search_global', 'true');
