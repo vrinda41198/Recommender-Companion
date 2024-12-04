@@ -13,8 +13,9 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-class Movies(db.Model):
-    __tablename__ = 'movies'
+class Movie(db.Model):
+    __tablename__ = 'movie'
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     release_date = db.Column(db.Date)
