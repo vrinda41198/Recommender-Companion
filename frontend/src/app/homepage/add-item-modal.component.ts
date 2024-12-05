@@ -60,18 +60,6 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
               </div>
             </div>
 
-            <div class="review-input">
-              <label>Review:</label>
-              <textarea
-                [(ngModel)]="review"
-                rows="4"
-                placeholder="Write your review..."
-                class="review-textarea"
-              ></textarea>
-            </div>
-          </div>
-        </div>
-
         <div class="modal-footer">
           <button 
             class="cancel-button"
