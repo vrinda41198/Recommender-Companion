@@ -28,6 +28,7 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
             >
           </div>
 
+
           <!-- Search Results -->
           <div class="search-results" *ngIf="searchResults.length > 0">
             <div 
@@ -36,7 +37,7 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
               [class.selected]="selectedItem?.id === item.id"
               (click)="selectItem(item)"
             >
-             <h3>{{ isBook(item) ? item.book_title : item.title }}</h3>
+          <h3>{{ isBook(item) ? item.book_title : item.title }}</h3>
           <p *ngIf="isBook(item)">by {{ item.book_author }}</p>
           <p *ngIf="isMovie(item)">Cast: {{ item.cast }}</p>
 
