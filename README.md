@@ -80,10 +80,12 @@ The `ApiService` and `AdminService` in the Angular frontend handle all interacti
 - **updateItem**: Updates the details of an item.
 - **generateRecommendations**: Offers personalized recommendations.
 
+## AI Models
+The application utilizes the GPT (Generative Pre-trained Transformer) API to generate personalized book and movie recommendations. Interaction with the GPT API is handled securely to ensure that user data is used effectively to enhance recommendation accuracy.
+
 ## Security Measures
-- Ensure Microsoft credentials are securely stored and not hard-coded.
-- Use HTTPS to protect data in transit.
-- Implement appropriate access controls within Azure AD.
+- The Microsoft credentials are securely stored and not hard-coded.
+- We use HTTPS to protect data in transit.
 
 ## Container Management
 Manage Docker containers using the following commands:
