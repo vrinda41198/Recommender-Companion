@@ -8,11 +8,12 @@ import { Observable } from 'rxjs';
 import { AddItemModalComponent } from './add-item-modal.component';
 import { RecommendationModalComponent } from './recommendation-modal.component';
 import { Movie, Book, Review, isMovie, isBook } from '../models';
+import { DeleteAccountModalComponent } from './delete-account-modal.component';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [FormsModule, CommonModule, AddItemModalComponent, RecommendationModalComponent],
+  imports: [FormsModule, CommonModule, AddItemModalComponent, RecommendationModalComponent, DeleteAccountModalComponent],
   template: `
     <div class="container">
       <!-- Header -->
@@ -35,6 +36,11 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
             
             <button (click)="logout()" class="logout-button">
               Logout
+            </button>
+            <button 
+              (click)="showDeleteAccount()" 
+              class="delete-account-button">
+              Delete Account
             </button>
           </div>
         </div>
@@ -143,6 +149,13 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
           *ngIf="showRecommendationModal"
           (close)="handleRecommendationModalClose()"
         ></app-recommendation-modal>
+        <app-delete-account-modal
+            *ngIf="showDeleteModal"
+            [isOpen]="showDeleteModal"
+            [isLoading]="isDeleting"
+            (close)="showDeleteModal = false"
+            (confirm)="handleDeleteAccount()"
+        ></app-delete-account-modal>
       </main>
     </div>
   `,
@@ -449,6 +462,21 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
       background-color: #7c3aed;
     }
 
+    .delete-account-button {
+        padding: 0.5rem 1rem;
+        background-color: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .delete-account-button:hover {
+        background-color: #b91c1c;
+    }
+
     @media (max-width: 768px) {
       .results-grid {
         grid-template-columns: 1fr;
@@ -476,6 +504,8 @@ export class HomepageComponent implements OnInit {
   showModal = false;
   modalType: 'movie' | 'book' = 'movie';
   showRecommendationModal = false;
+  showDeleteModal = false;
+  isDeleting = false;
 
   // Make type guards available in template
   isMovie = isMovie;
@@ -551,10 +581,32 @@ export class HomepageComponent implements OnInit {
     }
   }
 
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     this.showOptions = null; // Close the options dropdown when clicking anywhere else
   }
+
+  showDeleteAccount() {
+    this.showDeleteModal = true;
+}
+
+handleDeleteAccount() {
+    this.isDeleting = true;
+    this.authService.deleteAccount().subscribe({
+        next: () => {
+            this.showDeleteModal = false;
+            this.isDeleting = false;
+            // Router navigation is handled in the service
+        },
+        error: (error) => {
+            console.error('Error deleting account:', error);
+            this.isDeleting = false;
+            this.showDeleteModal = false;
+            // Handle error (you might want to show an error message)
+        }
+    });
+}
 
   navigateToAdmin() {
     this.router.navigate(['/admin']);

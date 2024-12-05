@@ -245,4 +245,25 @@ export class AuthService {
   getCurrentUser(): User | null {
     return this.authState.value.user;
   }
+
+  // Add this method to the AuthService class
+  deleteAccount(): Observable<any> {
+    this.setLoading(true);
+    return this.http.delete(`${this.BASE_URL}/account`).pipe(
+        tap(() => {
+            this.updateAuthState({
+                isLoggedIn: false,
+                isAdmin: false,
+                user: null,
+                isLoading: false
+            });
+            this.router.navigate(['/login']);
+        }),
+        catchError(error => {
+            console.error('Account deletion error:', error);
+            throw error;
+        }),
+        finalize(() => this.setLoading(false))
+    );
+  }
 }

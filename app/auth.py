@@ -316,3 +316,37 @@ def update_user_age():
         'message': 'Age updated successfully',
         'age': age
     })
+
+@auth.route('/api/auth/account', methods=['DELETE'])
+@user_required
+def delete_account():
+    """Delete user account and all associated data"""
+    try:
+        email = request.token_data.get('email') or request.token_data.get('preferred_username')
+        
+        # Get user
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Delete associated data (the ON DELETE CASCADE in database will handle this)
+        # But we'll do it explicitly for clarity and to ensure cleanup
+        UserMoviesWatched.query.filter_by(email=email).delete()
+        UserBooksRead.query.filter_by(email=email).delete()
+        
+        # Delete user
+        db.session.delete(user)
+        db.session.commit()
+        
+        # Clear authentication cookies in response
+        response = make_response(jsonify({
+            'message': 'Account deleted successfully'
+        }))
+        response.delete_cookie('id_token')
+        response.delete_cookie('access_token')
+        
+        return response
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
