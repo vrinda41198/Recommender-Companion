@@ -223,14 +223,13 @@ def delete_item(id,type):
 
 
 @main.route('/api/<type>s/<id>', methods=['PUT'])
-# @user_required
+@user_required
 def update_item_rating(id, type):
     """
     Update the user's rating for a movie or book
     """
     # Get the current user's email from the token
-    # user_email = request.token_data.get('email')
-    user_email = 'vvrinda@umass.edu'
+    user_email = request.token_data.get('email')
     # Get the data from the request
     data = request.get_json()
     
