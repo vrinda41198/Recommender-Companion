@@ -85,7 +85,9 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
 
         <!-- Results Grid -->
         <div class="results-grid">
-          <div *ngFor="let item of filteredResults; let i = index" class="item-card">
+          <div *ngFor="let item of filteredResults; let i = index" 
+              class="item-card" 
+              [class.expanded]="editingIndex === i">
            <!-- Card Image -->
               <img *ngIf="isBook(item)" [src]="item.image_url_s" alt="Book Cover" class="card-image">
               <img *ngIf="isMovie(item)" [src]="'https://image.tmdb.org/t/p/w500' + item.poster_path" alt="Movie Poster" class="card-image">
@@ -93,16 +95,17 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
               <div class="card-header">
                  <h3 class="item-title">{{ isBook(item) ? item.book_title : item.title }}</h3>
                 
-         <!-- Options Menu -->
-          <div class="options-menu" (document:click)="onDocumentClick($event)">
-            <button (click)="toggleOptions(i, $event)" class="options-button">⋮</button>
-            
-            <div *ngIf="showOptions === i" class="options-dropdown">
-              <button (click)="updateItem(item)" class="dropdown-item">Update</button>
-              <button (click)="deleteItem(item)" class="dropdown-item delete">Delete</button>
-            </div>
-          </div>
-                
+                <!-- Options Menu -->
+                      <div class="options-menu">
+                        <button (click)="toggleOptions(i, $event)" class="options-button">⋮</button>
+
+                        <div *ngIf="showOptions === i" class="options-dropdown">
+                          <button (click)="startUpdatingItem(i)" class="dropdown-item">Update</button>
+                          <button (click)="deleteItem(item)" class="dropdown-item delete">Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                                
               </div>
               
               <div class="item-details">
@@ -140,6 +143,22 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
                 </span>
               </p>
                
+                 <!-- Update Rating Section -->
+      <div *ngIf="editingIndex === i" class="update-rating-section">
+        <h4>Update Your Rating</h4>
+        <div class="star-rating">
+          <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+            <i
+              class="star"
+              [class.filled]="star <= newRating"
+              (click)="setNewRating(star)"
+              aria-hidden="true"
+            >★</i>
+          </ng-container>
+        </div>
+        <button (click)="submitUpdatedRating(item)" class="submit-rating-button">Submit</button>
+        <button (click)="cancelUpdatingItem()" class="cancel-button">Cancel</button>
+
               </div>
             </div>
           </div>
@@ -490,6 +509,61 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
       background-color: #7c3aed;
     }
 
+  .item-card.expanded {
+    background-color: #f9fafb;
+    border: 2px solid #2563eb;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+   }
+
+  .update-rating-section {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .star-rating {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+  }
+
+  .star {
+    cursor: pointer;
+    color: #d1d5db;
+  }
+
+  .star.filled {
+    color: #fbbf24;
+  }
+
+  .submit-rating-button {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 0.5rem;
+  }
+
+  .submit-rating-button:hover {
+    background-color: #059669;
+  }
+
+  .cancel-button {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .cancel-button:hover {
+    background-color: #b91c1c;
+  }
+
+
     .delete-account-button {
         padding: 0.5rem 1rem;
         background-color: #dc2626;
@@ -534,6 +608,8 @@ export class HomepageComponent implements OnInit {
   showRecommendationModal = false;
   showDeleteModal = false;
   isDeleting = false;
+  editingIndex: number | null = null; // Index of the card being edited
+  newRating: number = 0; // New rating being set
 
   // Make type guards available in template
   isMovie = isMovie;
@@ -596,10 +672,49 @@ export class HomepageComponent implements OnInit {
     this.showOptions = this.showOptions === index ? null : index;
   }
 
-  updateItem(item: Movie | Book) {
-    console.log('Update item:', item);
-    // Implement update logic
+
+  startUpdatingItem(index: number) {
+    this.editingIndex = index; // Mark the current card as being edited
+    this.newRating = this.filteredResults[index]?.user_rating || 0; // Initialize with the current rating
+    this.showOptions = null; // Close the options menu
   }
+
+
+  setNewRating(rating: number) {
+    this.newRating = rating; // Update the new rating
+  }
+
+
+  submitUpdatedRating(item: Movie | Book) {
+    if (item.id) {
+     
+      const updatedData = {
+        user_rating: this.newRating, // Send the new rating
+        type: item.type, // Include the type (movie or book)
+      };
+
+      this.apiService.updateItem(item.id, item.type, updatedData).subscribe({
+        next: () => {
+          item.user_rating = this.newRating; // Update the UI with the new rating
+          this.editingIndex = null; // Exit editing mode
+        },
+        error: (error) => {
+          console.error('Error updating rating:', error);
+          alert('Failed to update the rating. Please try again.'); // Optional error handling
+        },
+      });
+    }
+  }
+
+  cancelUpdatingItem() {
+    this.editingIndex = null; // Exit editing mode without making changes
+  }
+
+// updateItem(item: Movie | Book) {
+  //   console.log('Update item:', item);
+  //   // Implement update logic
+  // }
+
 
   deleteItem(item: Movie | Book) {
     console.log(item)
