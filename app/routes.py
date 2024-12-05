@@ -59,7 +59,7 @@ def get_global_list(tab_type, search_query, limit):
 
     elif tab_type == 'book' or tab_type == '':
         items = Books.query.limit(limit).all()
-        books = [item.to_dict() for item in items]
+        books = [{**item.to_dict(), "id": item.to_dict().pop("isbn")} for item in items]
     logging.info("Looking at books", books)
     return movies + books
 
@@ -94,9 +94,9 @@ def get_user_list(email,tab_type, search_query, limit):
             UserBooksRead.email == email
         ).all()
 
-        logging.info("Query executed, moviesItem: %s", booksItem)
+        logging.info("Query executed, booksItem: %s", booksItem)
 
-        books = [book.to_dict() for _, book in booksItem]
+        books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for _,book in booksItem]
     else:
         logging.info("function is throwing error")
 
@@ -106,36 +106,55 @@ def get_user_list(email,tab_type, search_query, limit):
 
 @main.route('/api/reviews', methods=['POST'])
 @user_required
-def add_movie_to_user():
+def add_item_to_user():
     data = request.get_json()
-
-    required_fields = ['itemId','itemType','rating']
+    required_fields = ['itemId', 'itemType', 'rating']
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
 
+    user_email = request.token_data.get('email')
 
-    user_email = request.token_data.get('email') 
-    existing_entry = UserMoviesWatched.query.filter_by(email=user_email, movie_id=data['itemId']).first()
+    if data['itemType'] == 'movie':
+        # Check if movie already exists for this user
+        existing_entry = UserMoviesWatched.query.filter_by(email=user_email, movie_id=data['itemId']).first()
+        if existing_entry:
+            return jsonify({'error': 'Movie is already present in the database for this user. Cannot enter again.'}), 400
+        
+        # Add new movie entry
+        new_entry = UserMoviesWatched(
+            email=user_email,
+            movie_id=data['itemId'],
+            user_rating=data['rating']
+        )
+        db.session.add(new_entry)
 
-    if existing_entry:
-        return jsonify({'error': 'Movie is already present in the database for this user. Cannot enter again.'}), 400
+    elif data['itemType'] == 'book':
+        # Check if book already exists for this user
+        existing_entry = UserBooksRead.query.filter_by(email=user_email, isbn=data['itemId']).first()
+        if existing_entry:
+            return jsonify({'error': 'Book is already present in the database for this user. Cannot enter again.'}), 400
+        
+        logging.info("Adding item ", data['itemId'])
+        # Add new book entry
+        new_entry = UserBooksRead(
+            email=user_email,
+            isbn=data['itemId'],
+            user_rating=data['rating']
+        )
+        db.session.add(new_entry)
+    
+    else:
+        return jsonify({'error': 'Invalid item type specified'}), 400
 
-    new_entry = UserMoviesWatched(
-        email=user_email,
-        movie_id=data['itemId'],
-        user_rating=data['rating']
-    )
-
-    db.session.add(new_entry)
     db.session.commit()
-
+    
     return jsonify({
         "status": "success",
-        "message": f"Movie has been added to the user's database.",
+        "message": f"{data['itemType'].capitalize()} has been added to the user's database.",
         "data": {
             "uuid": new_entry.uuid,
             "email": new_entry.email,
-            "movie_id": new_entry.movie_id,
+            "item_id": data['itemId'],
             "user_rating": new_entry.user_rating
         }
     }), 200

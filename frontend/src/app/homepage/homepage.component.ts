@@ -547,6 +547,7 @@ export class HomepageComponent implements OnInit {
   }
 
   deleteItem(item: Movie | Book) {
+    console.log(item)
     if (item.id) {
       this.apiService.deleteItem(item.id, item.type).subscribe({
         next: () => {
