@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AddItemModalComponent } from '../homepage/add-item-modal.component';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
@@ -9,69 +10,95 @@ import { Review } from '../models';
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, AddItemModalComponent],
+  imports: [CommonModule, FormsModule, AddItemModalComponent],
   template: `
     <div class="welcome-container">
       <div class="welcome-content">
         <h1 class="welcome-title">Welcome to Recommendation Companion!</h1>
-        <p class="welcome-text">
-          To get started, please rate at least 3 movies and 3 books you've already watched/read.
-          This will help us provide better recommendations for you.
-        </p>
-
-        <div class="progress-section">
-          <h2 class="section-title">Your Progress</h2>
-          
-          <div class="progress-cards">
-            <div class="progress-card">
-              <div class="progress-header">
-                <h3>Movies</h3>
-                <span class="progress-count">{{progress.movies}}/3</span>
-              </div>
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill" 
-                  [style.width]="(progress.movies / 3 * 100) + '%'"
-                ></div>
-              </div>
-              <button 
-                class="add-button"
-                (click)="showAddModal('movie')"
-                [disabled]="progress.movies >= 3"
-              >
-                Add Movie
-              </button>
-            </div>
-
-            <div class="progress-card">
-              <div class="progress-header">
-                <h3>Books</h3>
-                <span class="progress-count">{{progress.books}}/3</span>
-              </div>
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill" 
-                  [style.width]="(progress.books / 3 * 100) + '%'"
-                ></div>
-              </div>
-              <button 
-                class="add-button"
-                (click)="showAddModal('book')"
-                [disabled]="progress.books >= 3"
-              >
-                Add Book
-              </button>
-            </div>
+        
+        <!-- Age Input Section -->
+        <div class="age-section" *ngIf="!ageSubmitted">
+          <p class="welcome-text">Please tell us your age to help us provide better recommendations.</p>
+          <div class="age-input-container">
+            <input 
+              type="number" 
+              [(ngModel)]="userAge" 
+              min="1" 
+              max="120"
+              placeholder="Enter your age"
+              class="age-input"
+            >
+            <button 
+              class="submit-button" 
+              [disabled]="!isValidAge"
+              (click)="submitAge()"
+            >
+              Continue
+            </button>
           </div>
         </div>
 
-        <button 
-          class="complete-button"
-          [disabled]="!canComplete"
-          (click)="completeOnboarding()"
-        >
-          Continue to Dashboard
-        </button>
+        <!-- Ratings Section -->
+        <div class="ratings-section" *ngIf="ageSubmitted">
+          <p class="welcome-text">
+            Great! Now please rate at least 3 movies and 3 books you've already watched/read.
+            This will help us provide better recommendations for you.
+          </p>
+
+          <div class="progress-section">
+            <h2 class="section-title">Your Progress</h2>
+            
+            <div class="progress-cards">
+              <div class="progress-card">
+                <div class="progress-header">
+                  <h3>Movies</h3>
+                  <span class="progress-count">{{progress.movies}}/3</span>
+                </div>
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    [style.width]="(progress.movies / 3 * 100) + '%'"
+                  ></div>
+                </div>
+                <button 
+                  class="add-button"
+                  (click)="showAddModal('movie')"
+                  [disabled]="progress.movies >= 3"
+                >
+                  Add Movie
+                </button>
+              </div>
+
+              <div class="progress-card">
+                <div class="progress-header">
+                  <h3>Books</h3>
+                  <span class="progress-count">{{progress.books}}/3</span>
+                </div>
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    [style.width]="(progress.books / 3 * 100) + '%'"
+                  ></div>
+                </div>
+                <button 
+                  class="add-button"
+                  (click)="showAddModal('book')"
+                  [disabled]="progress.books >= 3"
+                >
+                  Add Book
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            class="complete-button"
+            [disabled]="!canComplete"
+            (click)="completeOnboarding()"
+          >
+            Continue to Dashboard
+          </button>
+        </div>
       </div>
 
       <app-add-item-modal
@@ -112,6 +139,42 @@ import { Review } from '../models';
       color: #4a5568;
       text-align: center;
       margin-bottom: 2rem;
+    }
+
+    .age-section {
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .age-input-container {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .age-input {
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      width: 120px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .submit-button {
+      padding: 0.75rem 1.5rem;
+      background: #4c51bf;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .submit-button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
     }
 
     .progress-section {
@@ -199,6 +262,8 @@ import { Review } from '../models';
   `]
 })
 export class WelcomeComponent implements OnInit {
+  userAge: number | null = null;
+  ageSubmitted = false;
   progress = {
     movies: 0,
     books: 0
@@ -216,8 +281,25 @@ export class WelcomeComponent implements OnInit {
     this.fetchProgress();
   }
 
+  get isValidAge(): boolean {
+    return this.userAge != null && this.userAge >= 1 && this.userAge <= 120;
+  }
+
   get canComplete(): boolean {
     return this.progress.movies >= 3 && this.progress.books >= 3;
+  }
+
+  submitAge() {
+    if (!this.isValidAge) return;
+
+    this.apiService.updateUserAge(this.userAge!).subscribe({
+      next: () => {
+        this.ageSubmitted = true;
+      },
+      error: (error) => {
+        console.error('Error updating age:', error);
+      }
+    });
   }
 
   fetchProgress() {

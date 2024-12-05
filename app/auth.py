@@ -289,3 +289,30 @@ def complete_onboarding():
         'message': 'Onboarding completed successfully',
         'onboardingCompleted': True
     })
+
+
+@auth.route('/api/user/age', methods=['POST'])
+@user_required
+def update_user_age():
+    """Update user's age"""
+    data = request.get_json()
+    if not data or 'age' not in data:
+        return jsonify({'error': 'Age is required'}), 400
+        
+    age = data['age']
+    if not isinstance(age, int) or age < 1 or age > 120:
+        return jsonify({'error': 'Invalid age'}), 400
+
+    email = request.token_data.get('email') or request.token_data.get('preferred_username')
+    user = User.query.filter_by(email=email).first()
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    user.age = age
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Age updated successfully',
+        'age': age
+    })

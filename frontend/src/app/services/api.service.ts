@@ -52,4 +52,8 @@ export class ApiService {
   generateRecommendations(): Observable<Recommendation[]> {
     return this.http.get<Recommendation[]>(`${this.baseUrl}/generate-recommendation`);
   }
+
+  updateUserAge(age: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/user/age`, { age });
+  }
 }
