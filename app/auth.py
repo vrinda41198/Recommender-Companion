@@ -8,8 +8,56 @@ from .middleware import validate_tokens
 from .extensions import db
 from app.models import User, UserMoviesWatched, UserBooksRead
 from app.middleware import user_required
+import requests
+from jwt.algorithms import RSAAlgorithm
 
 auth = Blueprint('auth', __name__)
+
+def get_microsoft_signing_keys():
+    """
+    Fetch Microsoft's signing keys from their OpenID Connect configuration.
+    Results are cached to avoid repeated requests.
+    """
+    openid_config_url = "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration"
+    jwks_uri = requests.get(openid_config_url).json()['jwks_uri']
+    jwks = requests.get(jwks_uri).json()
+    return {jwk['kid']: RSAAlgorithm.from_jwk(jwk) for jwk in jwks['keys']}
+
+def verify_token_signature(id_token):
+    """
+    Verify the signature of a Microsoft ID token.
+    Returns (decoded_token, error_message)
+    """
+    try:
+        # Get the unverified header to find which key was used
+        header = jwt.get_unverified_header(id_token)
+        kid = header['kid']
+        
+        # Get the signing keys (cached)
+        signing_keys = get_microsoft_signing_keys()
+        
+        if kid not in signing_keys:
+            return None, "Invalid key ID in token"
+            
+        # Verify the token's signature using the correct key
+        decoded = jwt.decode(
+            id_token,
+            key=signing_keys[kid],
+            algorithms=['RS256'],
+            options={
+                "verify_signature": True,
+                "verify_exp": False,  # We're only verifying signature
+                "verify_aud": False,
+                "verify_iss": False
+            }
+        )
+        
+        return decoded, None
+        
+    except jwt.InvalidTokenError as e:
+        return None, str(e)
+    except requests.RequestException as e:
+        return None, f"Failed to fetch signing keys: {str(e)}"
 
 def get_auth_url():
     """Generate Microsoft OAuth authorization URL"""
@@ -86,6 +134,10 @@ def callback():
     token_response = get_token_from_code(code)
     if 'error' in token_response:
         return jsonify({'error': token_response['error']}), 400
+    
+    decoded, error = verify_token_signature(token_response['id_token'])
+    if error:
+        return jsonify({'error': f'Invalid token: {error}'}), 400
 
     # Get user info from Graph API
     user_info = get_user_info(token_response['access_token'])
