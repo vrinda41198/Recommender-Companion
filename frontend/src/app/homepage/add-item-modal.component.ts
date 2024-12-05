@@ -36,9 +36,10 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
               [class.selected]="selectedItem?.id === item.id"
               (click)="selectItem(item)"
             >
-              <h3>{{item.title}}</h3>
-              <p *ngIf="isBook(item)">by {{item.book_author}}</p>
-              <p *ngIf="isMovie(item)">Cast: {{item.cast}}</p>
+             <h3>{{ isBook(item) ? item.book_title : item.title }}</h3>
+          <p *ngIf="isBook(item)">by {{ item.book_author }}</p>
+          <p *ngIf="isMovie(item)">Cast: {{ item.cast }}</p>
+
             </div>
           </div>
 
