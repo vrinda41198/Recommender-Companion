@@ -44,42 +44,64 @@ def get_listings():
         "data": data
     }), 200
 
+from sqlalchemy import text
 
 def get_global_list(tab_type, search_query, limit):
-
     logging.info("global list called")
 
-    movies=[]
-    books=[]
+    movies = []
+    books = []
     
     if tab_type == 'movie' or tab_type == '':
-        items = Movies.query.limit(limit).all()
+        if search_query:
+            # Use full-text search for movies
+            items = Movies.query.filter(
+                text("MATCH(title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*').limit(limit).all()
+        else:
+            items = Movies.query.limit(limit).all()
         movies = [item.to_dict() for item in items]
-        logging.info("Looking at movies ", movies)
+        logging.info("Looking at movies %s", movies)
 
-    elif tab_type == 'book' or tab_type == '':
-        items = Books.query.limit(limit).all()
+    if tab_type == 'book' or tab_type == '':
+        if search_query:
+            # Use full-text search for books
+            items = Books.query.filter(
+                text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*').limit(limit).all()
+        else:
+            items = Books.query.limit(limit).all()
         books = [{**item.to_dict(), "id": item.to_dict().pop("isbn")} for item in items]
-    logging.info("Looking at books", books)
+    
+    logging.info("Looking at books %s", books)
     return movies + books
 
 
-def get_user_list(email,tab_type, search_query, limit):
-    movies=[]
-    books=[]
-    email= request.token_data.get('email')
+def get_user_list(email, tab_type, search_query, limit):
+    movies = []
+    books = []
+    email = request.token_data.get('email')
 
     logging.info("user list called")
-    logging.info("tab type %s",tab_type)
-
+    logging.info("tab type %s", tab_type)
 
     if tab_type == 'movie' or tab_type == '':
         logging.info("entering movie tab type")
-        logging.info("emai is %s",email)
-        moviesItem = db.session.query(UserMoviesWatched, Movies).filter(
+        logging.info("email is %s", email)
+        
+        # Base query for user's movies
+        query = db.session.query(UserMoviesWatched, Movies).filter(
             UserMoviesWatched.movie_id == Movies.id,
             UserMoviesWatched.email == email
-        ).all()
+        )
+        
+        # Apply full-text search if query exists
+        if search_query:
+            query = query.filter(
+                text("MATCH(Movies.title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*')
+        
+        moviesItem = query.limit(limit).all()
 
         logging.info("Query executed, moviesItem: %s", moviesItem)
 
@@ -87,21 +109,86 @@ def get_user_list(email,tab_type, search_query, limit):
     
     if tab_type == 'book' or tab_type == '':
         logging.info("entering book tab type")
-        logging.info("emai is %s",email)
+        logging.info("email is %s", email)
 
-        booksItem = db.session.query(UserBooksRead, Books).filter(
+        # Base query for user's books
+        query = db.session.query(UserBooksRead, Books).filter(
             UserBooksRead.isbn == Books.isbn,
             UserBooksRead.email == email
-        ).all()
+        )
+        
+        # Apply full-text search if query exists
+        if search_query:
+            query = query.filter(
+                text("MATCH(Books.book_title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*')
+        
+        booksItem = query.limit(limit).all()
 
         logging.info("Query executed, booksItem: %s", booksItem)
 
-        books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for _,book in booksItem]
-    else:
-        logging.info("function is throwing error")
-
+        books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for _, book in booksItem]
 
     return movies + books
+
+
+# def get_global_list(tab_type, search_query, limit):
+
+#     logging.info("global list called")
+
+#     movies=[]
+#     books=[]
+    
+#     if tab_type == 'movie' or tab_type == '':
+#         items = Movies.query.limit(limit).all()
+#         movies = [item.to_dict() for item in items]
+#         logging.info("Looking at movies ", movies)
+
+#     elif tab_type == 'book' or tab_type == '':
+#         items = Books.query.limit(limit).all()
+#         books = [{**item.to_dict(), "id": item.to_dict().pop("isbn")} for item in items]
+#     logging.info("Looking at books", books)
+#     return movies + books
+
+
+# def get_user_list(email,tab_type, search_query, limit):
+#     movies=[]
+#     books=[]
+#     email= request.token_data.get('email')
+
+#     logging.info("user list called")
+#     logging.info("tab type %s",tab_type)
+
+
+#     if tab_type == 'movie' or tab_type == '':
+#         logging.info("entering movie tab type")
+#         logging.info("emai is %s",email)
+#         moviesItem = db.session.query(UserMoviesWatched, Movies).filter(
+#             UserMoviesWatched.movie_id == Movies.id,
+#             UserMoviesWatched.email == email
+#         ).all()
+
+#         logging.info("Query executed, moviesItem: %s", moviesItem)
+
+#         movies = [movie.to_dict() for _, movie in moviesItem]
+    
+#     if tab_type == 'book' or tab_type == '':
+#         logging.info("entering book tab type")
+#         logging.info("emai is %s",email)
+
+#         booksItem = db.session.query(UserBooksRead, Books).filter(
+#             UserBooksRead.isbn == Books.isbn,
+#             UserBooksRead.email == email
+#         ).all()
+
+#         logging.info("Query executed, booksItem: %s", booksItem)
+
+#         books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for _,book in booksItem]
+#     else:
+#         logging.info("function is throwing error")
+
+
+#     return movies + books
 
 
 @main.route('/api/reviews', methods=['POST'])
