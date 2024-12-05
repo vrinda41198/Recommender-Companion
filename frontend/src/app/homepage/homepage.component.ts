@@ -319,6 +319,7 @@ import { skipWhile, take } from 'rxjs/operators';
 
     .item-card {
       background-color: white;
+      padding: 1rem; 
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       transition: box-shadow 0.2s;
@@ -337,6 +338,7 @@ import { skipWhile, take } from 'rxjs/operators';
         max-height: 140px; /* Increase the maximum height for larger images */
         align: centre;
         margin-bottom: 1rem; /* Keep spacing below the image */
+        margin-top: 2rem; /* Add spacing above to shift the image downward */
         margin: 0 auto; /* Center horizontally */
         display: block; /* Necessary to center inline elements like <img> with margin auto */
         border-radius: 4px; /* Optional: Rounds the image corners */
