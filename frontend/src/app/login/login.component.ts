@@ -12,8 +12,8 @@ import { PLATFORM_ID } from '@angular/core';
     <div class="login-container">
       <div class="login-card">
         <div class="logo">
-          <h1>Recommendation Companion</h1>
-          <p>Your Personal Entertainment Guide</p>
+          <h1 style="color: white;">Recommender Companion</h1>
+          <p style="color: white;">Your Personal Entertainment Guide</p>
         </div>
         <button class="microsoft-login-btn" (click)="loginWithMicrosoft()">
           <svg class="ms-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23">
@@ -38,12 +38,15 @@ import { PLATFORM_ID } from '@angular/core';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-image: url('../../assets/login-background.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
 
     .login-card {
-      background: white;
-      padding: 2rem;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 3rem;
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       text-align: center;

@@ -17,20 +17,21 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
   template: `
     <div class="container">
       <!-- Header -->
-      <header class="header">
+
+      <header class="header" style="background-color: black; color: white;">
         <div class="header-content">
           <!-- Logo -->
-          <h1 class="app-title">Recommendation Companion</h1>
+          <h1 class="app-title" style="color: white;">Recommender Companion</h1>
 
           <!-- User Info & Controls -->
           <div class="user-section" *ngIf="authState$ | async as authState">
             <div class="user-info">
-              <span class="user-name">Welcome, {{authState.user?.displayName}}</span>
+              <span class="user-name"  style="color: white;">Welcome, {{authState.user?.displayName}}</span>
             </div>
             
             <a *ngIf="authState.isAdmin" 
-               (click)="navigateToAdmin()"
-               class="admin-link">
+              (click)="navigateToAdmin()"
+              class="admin-link" style="color: white;">
               Admin Dashboard
             </a>
             
@@ -45,6 +46,8 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
           </div>
         </div>
       </header>
+
+      
 
       <!-- Main Content -->
       <main class="main-content">
@@ -194,7 +197,12 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
   styles: [`
     .container {
       min-height: 100vh;
-      background-color: #f5f5f5;
+      background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.7)),
+        url('../../assets/home-background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat; 
     }
 
     .header {
@@ -378,7 +386,7 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
     }
 
     .item-card {
-      background-color: white;
+      background: rgba(255, 255, 255, 0.7);
       padding: 1rem; 
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
