@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { ApiService } from '../services/api.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -87,15 +87,16 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
               <div class="card-header">
                  <h3 class="item-title">{{ isBook(item) ? item.book_title : item.title }}</h3>
                 
-                <!-- Options Menu -->
-                <div class="options-menu">
-                  <button (click)="toggleOptions(i)" class="options-button">⋮</button>
-                  
-                  <div *ngIf="showOptions === i" class="options-dropdown">
-                    <button (click)="updateItem(item)" class="dropdown-item">Update</button>
-                    <button (click)="deleteItem(item)" class="dropdown-item delete">Delete</button>
-                  </div>
-                </div>
+         <!-- Options Menu -->
+          <div class="options-menu" (document:click)="onDocumentClick($event)">
+            <button (click)="toggleOptions(i, $event)" class="options-button">⋮</button>
+            
+            <div *ngIf="showOptions === i" class="options-dropdown">
+              <button (click)="updateItem(item)" class="dropdown-item">Update</button>
+              <button (click)="deleteItem(item)" class="dropdown-item delete">Delete</button>
+            </div>
+          </div>
+                
               </div>
               
               <div class="item-details">
@@ -526,7 +527,8 @@ export class HomepageComponent implements OnInit {
     });
   }
 
-  toggleOptions(index: number) {
+  toggleOptions(index: number, event: MouseEvent) {
+    event.stopPropagation(); // Prevent the click from propagating to the document
     this.showOptions = this.showOptions === index ? null : index;
   }
 
@@ -547,6 +549,11 @@ export class HomepageComponent implements OnInit {
         }
       });
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    this.showOptions = null; // Close the options dropdown when clicking anywhere else
   }
 
   navigateToAdmin() {
