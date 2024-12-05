@@ -89,7 +89,7 @@ The `ApiService` and `AdminService` in the Angular frontend handle all interacti
 Manage Docker containers using the following commands:
 ```bash
 # Start all services
-python start.py <tenant_id> <client_id> <client_secret>
+python start.py <tenant_id> <client_id> <client_secret> <gpt_api_keys>
 
 # Stop all services and remove volumes
 docker-compose down -v
