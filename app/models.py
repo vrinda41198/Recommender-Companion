@@ -60,7 +60,7 @@ class UserBooksRead(db.Model):
     __tablename__ = 'user_books_read'
 
     uuid = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), db.ForeignKey('user.email'), nullable=False)
+    email = db.Column(db.String(120), db.ForeignKey('rc_user.email'), nullable=False)
     isbn = db.Column(db.BigInteger, db.ForeignKey('books.isbn'), nullable=False)
     user_rating = db.Column(db.Integer)
 
@@ -68,6 +68,6 @@ class UserMoviesWatched(db.Model):
     __tablename__ = 'user_movies_watched'
 
     uuid = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), db.ForeignKey('user.email'), nullable=False)
+    email = db.Column(db.String(120), db.ForeignKey('rc_user.email'), nullable=False)
     movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False)
     user_rating = db.Column(db.Integer)
