@@ -139,65 +139,6 @@ def get_user_list(email, tab_type, search_query, limit):
     return movies + books
 
 
-# def get_global_list(tab_type, search_query, limit):
-
-#     logging.info("global list called")
-
-#     movies=[]
-#     books=[]
-    
-#     if tab_type == 'movie' or tab_type == '':
-#         items = Movies.query.limit(limit).all()
-#         movies = [item.to_dict() for item in items]
-#         logging.info("Looking at movies ", movies)
-
-#     elif tab_type == 'book' or tab_type == '':
-#         items = Books.query.limit(limit).all()
-#         books = [{**item.to_dict(), "id": item.to_dict().pop("isbn")} for item in items]
-#     logging.info("Looking at books", books)
-#     return movies + books
-
-
-# def get_user_list(email,tab_type, search_query, limit):
-#     movies=[]
-#     books=[]
-#     email= request.token_data.get('email')
-
-#     logging.info("user list called")
-#     logging.info("tab type %s",tab_type)
-
-
-#     if tab_type == 'movie' or tab_type == '':
-#         logging.info("entering movie tab type")
-#         logging.info("emai is %s",email)
-#         moviesItem = db.session.query(UserMoviesWatched, Movies).filter(
-#             UserMoviesWatched.movie_id == Movies.id,
-#             UserMoviesWatched.email == email
-#         ).all()
-
-#         logging.info("Query executed, moviesItem: %s", moviesItem)
-
-#         movies = [movie.to_dict() for _, movie in moviesItem]
-    
-#     if tab_type == 'book' or tab_type == '':
-#         logging.info("entering book tab type")
-#         logging.info("emai is %s",email)
-
-#         booksItem = db.session.query(UserBooksRead, Books).filter(
-#             UserBooksRead.isbn == Books.isbn,
-#             UserBooksRead.email == email
-#         ).all()
-
-#         logging.info("Query executed, booksItem: %s", booksItem)
-
-#         books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for _,book in booksItem]
-#     else:
-#         logging.info("function is throwing error")
-
-
-#     return movies + books
-
-
 @main.route('/api/reviews', methods=['POST'])
 @user_required
 def add_item_to_user():
@@ -280,6 +221,80 @@ def delete_item(id,type):
         "message": f"Item with ID {id} has been deleted from the user's database."
     }), 200
 
+
+@main.route('/api/<type>s/<id>', methods=['PUT'])
+# @user_required
+def update_item_rating(id, type):
+    """
+    Update the user's rating for a movie or book
+    """
+    # Get the current user's email from the token
+    # user_email = request.token_data.get('email')
+    user_email = 'vvrinda@umass.edu'
+    # Get the data from the request
+    data = request.get_json()
+    
+    # Validate that rating is provided
+    if 'user_rating' not in data:
+        return jsonify({'error': 'Rating is required'}), 400
+    
+    try:
+        # Validate rating is between 1 and 5
+        user_rating = int(data['user_rating'])
+        if user_rating < 1 or user_rating > 5:
+            return jsonify({'error': 'Rating must be between 1 and 5'}), 400
+        
+        # Determine which table to update based on type
+        if type == 'movie':
+            # Find the specific user's movie entry
+            entry_to_update = UserMoviesWatched.query.filter_by(
+                email=user_email, 
+                movie_id=id
+            ).first()
+            
+            # Check if entry exists
+            if not entry_to_update:
+                return jsonify({'error': 'No matching movie entry found for this user'}), 404
+            
+            # Update the rating
+            entry_to_update.user_rating = user_rating
+            
+        elif type == 'book':
+            # Find the specific user's book entry
+            entry_to_update = UserBooksRead.query.filter_by(
+                email=user_email, 
+                isbn=id
+            ).first()
+            
+            # Check if entry exists
+            if not entry_to_update:
+                return jsonify({'error': 'No matching book entry found for this user'}), 404
+            
+            # Update the rating
+            entry_to_update.user_rating = user_rating
+        
+        else:
+            return jsonify({'error': 'Invalid item type'}), 400
+        
+        # Commit the changes
+        db.session.commit()
+        
+        # Return success response
+        return jsonify({
+            "status": "success",
+            "message": f"{type.capitalize()} rating updated successfully",
+            "data": {
+                "id": id,
+                "user_rating": user_rating
+            }
+        }), 200
+    
+    except ValueError:
+        return jsonify({'error': 'Invalid rating format'}), 400
+    except Exception as e:
+        # Rollback in case of any database error
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 
 @main.route('/api/generate-recommendation', methods=['GET'])
