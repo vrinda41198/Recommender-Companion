@@ -11,7 +11,7 @@ import { AuthService } from '../services/auth.service';
 @Injectable({
   providedIn: 'root'
 })
-export class UserGuard implements CanActivate {
+export class WelcomeGuard implements CanActivate {
   constructor(
     private authService: AuthService,
     private router: Router
@@ -25,14 +25,21 @@ export class UserGuard implements CanActivate {
       skipWhile(state => state.isLoading),
       take(1),
       map(authState => {
-        if (!authState.isLoggedIn) {
+        // Check if user is logged in
+        if (!authState.isLoggedIn || !authState.user) {
           this.router.navigate(['/login']);
           return false;
         }
         
-        // Redirect admin to admin page
+        // Check if user is admin
         if (authState.isAdmin) {
           this.router.navigate(['/admin']);
+          return false;
+        }
+
+        // If onboarding is completed and user is not new, redirect to home
+        if (authState.user.onboardingCompleted && !authState.user.isNewUser) {
+          this.router.navigate(['/home']);
           return false;
         }
 

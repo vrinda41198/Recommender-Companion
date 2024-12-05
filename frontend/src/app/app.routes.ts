@@ -4,8 +4,9 @@ import { AuthCallbackComponent } from './auth/auth-callback.component';
 import { HomepageComponent } from './homepage/homepage.component';
 import { AdminComponent } from './admin/admin.component';
 import { WelcomeComponent } from './welcome/welcome.component';
-import { UserGuard } from './guards/user.guard';
+import { HomeGuard } from './guards/home.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { WelcomeGuard } from './guards/welcome.guard';
 
 export const routes: Routes = [
   { 
@@ -19,12 +20,12 @@ export const routes: Routes = [
   { 
     path: 'welcome', 
     component: WelcomeComponent,
-    canActivate: [UserGuard]
+    canActivate: [WelcomeGuard]
   },
   { 
     path: 'home', 
     component: HomepageComponent,
-    canActivate: [UserGuard]
+    canActivate: [HomeGuard]
   },
   { 
     path: 'admin', 

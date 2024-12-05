@@ -72,7 +72,27 @@ export class AuthService {
   }
 
   completeOnboarding(): Observable<any> {
-    return this.http.post(`${this.BASE_URL}/complete-onboarding`, {});
+    return this.http.post(`${this.BASE_URL}/complete-onboarding`, {}).pipe(
+      tap((response) => {
+        const currentState = this.authState.value;
+        
+        if (currentState.user) {
+          const newState = {
+            ...currentState,
+            user: {
+              ...currentState.user,
+              onboardingCompleted: true,
+              isNewUser: false
+            }
+          };
+          this.updateAuthState(newState);
+        }
+      }),
+      catchError(error => {
+        console.error('Error in completeOnboarding:', error);
+        throw error;
+      })
+    );
   }
 
   handleCallback(code: string, state: string): Observable<AuthCallbackResponse> {

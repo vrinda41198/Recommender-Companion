@@ -8,7 +8,6 @@ import { Observable } from 'rxjs';
 import { AddItemModalComponent } from './add-item-modal.component';
 import { RecommendationModalComponent } from './recommendation-modal.component';
 import { Movie, Book, Review, isMovie, isBook } from '../models';
-import { skipWhile, take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-homepage',
@@ -490,19 +489,7 @@ export class HomepageComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Check if user is new or hasn't completed onboarding
-    this.authState$.pipe(
-      // Skip loading state
-      skipWhile(state => state.isLoading),
-      // Only take first emission
-      take(1)
-    ).subscribe(authState => {
-      if (authState.user?.isNewUser || !authState.user?.onboardingCompleted) {
-        this.router.navigate(['/welcome']);
-      } else {
-        this.fetchResults();
-      }
-    });
+    this.fetchResults();
   }
 
   fetchResults() {

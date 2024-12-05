@@ -6,6 +6,9 @@ import { AddItemModalComponent } from '../homepage/add-item-modal.component';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
 import { Review } from '../models';
+import { tap } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
+import { map, filter, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-welcome',
@@ -339,13 +342,22 @@ export class WelcomeComponent implements OnInit {
 
   completeOnboarding() {
     if (!this.canComplete) return;
-
-    this.authService.completeOnboarding().subscribe({
+    
+    this.authService.completeOnboarding().pipe(
+      // Force a refresh of the auth state
+      switchMap(() => this.authService.checkAuthStatus()),
+      tap(() => console.log('Auth status checked')),
+      // Wait for the state to be updated
+      switchMap(() => this.authService.authState$.pipe(
+        filter(state => state.user?.onboardingCompleted === true),
+        take(1)
+      ))
+    ).subscribe({
       next: () => {
         this.router.navigate(['/home']);
       },
       error: (error) => {
-        console.error('Error completing onboarding:', error);
+        console.error('Error in onboarding completion flow:', error);
       }
     });
   }
