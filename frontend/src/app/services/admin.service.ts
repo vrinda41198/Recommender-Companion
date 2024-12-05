@@ -2,22 +2,24 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+// admin.service.ts
 export interface Movie {
   id?: number;
   title: string;
-  cast: string[];
-  description: string;
-  release_year: number;
-  genre: string;
+  release_date: string;
+  original_language: string;
+  genres: string;
+  cast: string;
+  director: string;
+  poster_path?: string;
 }
 
 export interface Book {
-  id?: number;
-  title: string;
-  author: string;
-  description: string;
-  publish_year: number;
-  genre: string;
+  isbn?: number;
+  book_title: string;
+  book_author: string;
+  year_of_publication: number;
+  image_url_s?: string;
 }
 
 @Injectable({
@@ -37,10 +39,10 @@ export class AdminService {
   }
 
   getRecentMovies(): Observable<Movie[]> {
-    return this.http.get<Movie[]>(`${this.BASE_URL}/listings?tab_type=movie`);
+    return this.http.get<Movie[]>(`${this.BASE_URL}/listings?type=movie`);
   }
 
   getRecentBooks(): Observable<Book[]> {
-    return this.http.get<Book[]>(`${this.BASE_URL}/listings?tab_type=book`);
+    return this.http.get<Book[]>(`${this.BASE_URL}/listings?type=book`);
   }
 }

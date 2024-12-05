@@ -53,6 +53,18 @@ import { AdminService, Movie, Book } from '../services/admin.service';
           <div *ngIf="activeTab === 'movies'" class="form-container">
             <form [formGroup]="movieForm" (ngSubmit)="onMovieSubmit()" class="form">
               <div class="form-group">
+                <label>TMDB ID</label>
+                <input
+                  type="number"
+                  formControlName="id"
+                  [class.error]="movieForm.get('id')?.invalid && movieForm.get('id')?.touched"
+                >
+                <div *ngIf="movieForm.get('id')?.invalid && movieForm.get('id')?.touched" 
+                    class="error-message">
+                  Valid TMDB ID is required
+                </div>
+              </div>
+              <div class="form-group">
                 <label>Title</label>
                 <input
                   type="text"
@@ -62,6 +74,19 @@ import { AdminService, Movie, Book } from '../services/admin.service';
                 <div *ngIf="movieForm.get('title')?.invalid && movieForm.get('title')?.touched" 
                      class="error-message">
                   Title is required
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Director</label>
+                <input
+                  type="text"
+                  formControlName="director"
+                  [class.error]="movieForm.get('director')?.invalid && movieForm.get('director')?.touched"
+                >
+                <div *ngIf="movieForm.get('director')?.invalid && movieForm.get('director')?.touched" 
+                     class="error-message">
+                  Director is required
                 </div>
               </div>
 
@@ -79,49 +104,51 @@ import { AdminService, Movie, Book } from '../services/admin.service';
               </div>
 
               <div class="form-group">
-                <label>Description</label>
-                <textarea
-                  formControlName="description"
-                  rows="3"
-                  [class.error]="movieForm.get('description')?.invalid && movieForm.get('description')?.touched"
-                ></textarea>
-                <div *ngIf="movieForm.get('description')?.invalid && movieForm.get('description')?.touched" 
-                     class="error-message">
-                  Description is required
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Release Year</label>
+                <label>Release Date</label>
                 <input
-                  type="number"
-                  formControlName="release_year"
-                  [class.error]="movieForm.get('release_year')?.invalid && movieForm.get('release_year')?.touched"
+                  type="date"
+                  formControlName="release_date"
+                  [class.error]="movieForm.get('release_date')?.invalid && movieForm.get('release_date')?.touched"
                 >
-                <div *ngIf="movieForm.get('release_year')?.invalid && movieForm.get('release_year')?.touched" 
+                <div *ngIf="movieForm.get('release_date')?.invalid && movieForm.get('release_date')?.touched" 
                      class="error-message">
-                  Valid release year is required
+                  Valid release date is required
                 </div>
               </div>
 
               <div class="form-group">
-                <label>Genre</label>
-                <select
-                  formControlName="genre"
-                  [class.error]="movieForm.get('genre')?.invalid && movieForm.get('genre')?.touched"
+                <label>Original Language (2-letter code)</label>
+                <input
+                  type="text"
+                  formControlName="original_language"
+                  maxlength="2"
+                  [class.error]="movieForm.get('original_language')?.invalid && movieForm.get('original_language')?.touched"
                 >
-                  <option value="">Select Genre</option>
-                  <option value="Action">Action</option>
-                  <option value="Comedy">Comedy</option>
-                  <option value="Drama">Drama</option>
-                  <option value="Horror">Horror</option>
-                  <option value="Sci-Fi">Sci-Fi</option>
-                  <option value="Thriller">Thriller</option>
-                </select>
-                <div *ngIf="movieForm.get('genre')?.invalid && movieForm.get('genre')?.touched" 
+                <div *ngIf="movieForm.get('original_language')?.invalid && movieForm.get('original_language')?.touched" 
                      class="error-message">
-                  Genre is required
+                  Valid 2-letter language code is required
                 </div>
+              </div>
+
+              <div class="form-group">
+                <label>Genres (comma separated)</label>
+                <input
+                  type="text"
+                  formControlName="genres"
+                  [class.error]="movieForm.get('genres')?.invalid && movieForm.get('genres')?.touched"
+                >
+                <div *ngIf="movieForm.get('genres')?.invalid && movieForm.get('genres')?.touched" 
+                     class="error-message">
+                  At least one genre is required
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Poster Path (optional)</label>
+                <input
+                  type="text"
+                  formControlName="poster_path"
+                >
               </div>
 
               <div class="form-actions">
@@ -134,20 +161,32 @@ import { AdminService, Movie, Book } from '../services/admin.service';
               </div>
             </form>
           </div>
-
           <!-- Book Form -->
           <div *ngIf="activeTab === 'books'" class="form-container">
             <form [formGroup]="bookForm" (ngSubmit)="onBookSubmit()" class="form">
               <div class="form-group">
-                <label>Title</label>
+                <label>ISBN</label>
+                <input
+                  type="number"
+                  formControlName="isbn"
+                  [class.error]="bookForm.get('isbn')?.invalid && bookForm.get('isbn')?.touched"
+                >
+                <div *ngIf="bookForm.get('isbn')?.invalid && bookForm.get('isbn')?.touched" 
+                     class="error-message">
+                  Valid ISBN is required
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Book Title</label>
                 <input
                   type="text"
-                  formControlName="title"
-                  [class.error]="bookForm.get('title')?.invalid && bookForm.get('title')?.touched"
+                  formControlName="book_title"
+                  [class.error]="bookForm.get('book_title')?.invalid && bookForm.get('book_title')?.touched"
                 >
-                <div *ngIf="bookForm.get('title')?.invalid && bookForm.get('title')?.touched" 
+                <div *ngIf="bookForm.get('book_title')?.invalid && bookForm.get('book_title')?.touched" 
                      class="error-message">
-                  Title is required
+                  Book title is required
                 </div>
               </div>
 
@@ -155,59 +194,34 @@ import { AdminService, Movie, Book } from '../services/admin.service';
                 <label>Author</label>
                 <input
                   type="text"
-                  formControlName="author"
-                  [class.error]="bookForm.get('author')?.invalid && bookForm.get('author')?.touched"
+                  formControlName="book_author"
+                  [class.error]="bookForm.get('book_author')?.invalid && bookForm.get('book_author')?.touched"
                 >
-                <div *ngIf="bookForm.get('author')?.invalid && bookForm.get('author')?.touched" 
+                <div *ngIf="bookForm.get('book_author')?.invalid && bookForm.get('book_author')?.touched" 
                      class="error-message">
                   Author is required
                 </div>
               </div>
 
               <div class="form-group">
-                <label>Description</label>
-                <textarea
-                  formControlName="description"
-                  rows="3"
-                  [class.error]="bookForm.get('description')?.invalid && bookForm.get('description')?.touched"
-                ></textarea>
-                <div *ngIf="bookForm.get('description')?.invalid && bookForm.get('description')?.touched" 
-                     class="error-message">
-                  Description is required
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Publish Year</label>
+                <label>Year of Publication</label>
                 <input
                   type="number"
-                  formControlName="publish_year"
-                  [class.error]="bookForm.get('publish_year')?.invalid && bookForm.get('publish_year')?.touched"
+                  formControlName="year_of_publication"
+                  [class.error]="bookForm.get('year_of_publication')?.invalid && bookForm.get('year_of_publication')?.touched"
                 >
-                <div *ngIf="bookForm.get('publish_year')?.invalid && bookForm.get('publish_year')?.touched" 
+                <div *ngIf="bookForm.get('year_of_publication')?.invalid && bookForm.get('year_of_publication')?.touched" 
                      class="error-message">
-                  Valid publish year is required
+                  Valid publication year is required
                 </div>
               </div>
 
               <div class="form-group">
-                <label>Genre</label>
-                <select
-                  formControlName="genre"
-                  [class.error]="bookForm.get('genre')?.invalid && bookForm.get('genre')?.touched"
+                <label>Image URL (optional)</label>
+                <input
+                  type="text"
+                  formControlName="image_url_s"
                 >
-                  <option value="">Select Genre</option>
-                  <option value="Fiction">Fiction</option>
-                  <option value="Non-Fiction">Non-Fiction</option>
-                  <option value="Mystery">Mystery</option>
-                  <option value="Science Fiction">Science Fiction</option>
-                  <option value="Fantasy">Fantasy</option>
-                  <option value="Biography">Biography</option>
-                </select>
-                <div *ngIf="bookForm.get('genre')?.invalid && bookForm.get('genre')?.touched" 
-                     class="error-message">
-                  Genre is required
-                </div>
               </div>
 
               <div class="form-actions">
@@ -477,28 +491,27 @@ export class AdminComponent implements OnInit {
     
     // Initialize Movie Form
     this.movieForm = this.fb.group({
+      id: ['', [Validators.required, Validators.min(1)]],  // Add TMDB ID field
       title: ['', Validators.required],
+      director: ['', Validators.required],
       cast: ['', Validators.required],
-      description: ['', Validators.required],
-      release_year: ['', [
-        Validators.required, 
-        Validators.min(1888), 
-        Validators.max(new Date().getFullYear() + 5)
-      ]],
-      genre: ['', Validators.required]
+      release_date: ['', Validators.required],
+      original_language: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(2)]],
+      genres: ['', Validators.required],
+      poster_path: ['']
     });
 
     // Initialize Book Form
     this.bookForm = this.fb.group({
-      title: ['', Validators.required],
-      author: ['', Validators.required],
-      description: ['', Validators.required],
-      publish_year: ['', [
+      isbn: ['', [Validators.required, Validators.min(1000000000)]],
+      book_title: ['', Validators.required],
+      book_author: ['', Validators.required],
+      year_of_publication: ['', [
         Validators.required, 
         Validators.min(1000), 
-        Validators.max(new Date().getFullYear() + 5)
+        Validators.max(new Date().getFullYear() + 1)
       ]],
-      genre: ['', Validators.required]
+      image_url_s: ['']
     });
   }
 
@@ -513,15 +526,20 @@ export class AdminComponent implements OnInit {
   }
 
   onMovieSubmit() {
-    if (this.movieForm.valid) {
+    if (this.movieForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       this.clearMessage();
 
       const formValue = this.movieForm.value;
       const movie: Movie = {
-        ...formValue,
-        cast: formValue.cast.split(',').map((name: string) => name.trim())
-          .filter((name: string) => name)
+        id: formValue.id,
+        title: formValue.title,
+        director: formValue.director,
+        cast: formValue.cast, // Backend will handle string
+        release_date: formValue.release_date,
+        original_language: formValue.original_language,
+        genres: formValue.genres, // Backend will handle string
+        poster_path: formValue.poster_path || null
       };
 
       this.adminService.addMovie(movie).subscribe({
@@ -531,7 +549,10 @@ export class AdminComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error adding movie:', error);
-          this.showError('Failed to add movie');
+          this.showError(error.error?.message || 'Failed to add movie');
+        },
+        complete: () => {
+          this.isSubmitting = false;
         }
       });
     } else {
@@ -540,11 +561,18 @@ export class AdminComponent implements OnInit {
   }
 
   onBookSubmit() {
-    if (this.bookForm.valid) {
+    if (this.bookForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       this.clearMessage();
 
-      const book: Book = this.bookForm.value;
+      const formValue = this.bookForm.value;
+      const book: Book = {
+        isbn: Number(formValue.isbn),
+        book_title: formValue.book_title,
+        book_author: formValue.book_author,
+        year_of_publication: formValue.year_of_publication,
+        image_url_s: formValue.image_url_s || null
+      };
 
       this.adminService.addBook(book).subscribe({
         next: () => {
@@ -553,7 +581,10 @@ export class AdminComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error adding book:', error);
-          this.showError('Failed to add book');
+          this.showError(error.error?.message || 'Failed to add book');
+        },
+        complete: () => {
+          this.isSubmitting = false;
         }
       });
     } else {
@@ -563,7 +594,12 @@ export class AdminComponent implements OnInit {
 
   markFormAsTouched(form: FormGroup) {
     Object.values(form.controls).forEach(control => {
-      control.markAsTouched();
+      if (control.invalid) {
+        control.markAsTouched();
+        if (control instanceof FormGroup) {
+          this.markFormAsTouched(control);
+        }
+      }
     });
   }
 
@@ -572,10 +608,7 @@ export class AdminComponent implements OnInit {
     this.submitSuccess = true;
     this.submitMessage = message;
     
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      this.clearMessage();
-    }, 3000);
+    setTimeout(() => this.clearMessage(), 3000);
   }
 
   showError(message: string) {
@@ -583,10 +616,7 @@ export class AdminComponent implements OnInit {
     this.submitSuccess = false;
     this.submitMessage = message;
     
-    // Clear error message after 5 seconds
-    setTimeout(() => {
-      this.clearMessage();
-    }, 5000);
+    setTimeout(() => this.clearMessage(), 5000);
   }
 
   clearMessage() {
@@ -598,8 +628,14 @@ export class AdminComponent implements OnInit {
   }
 
   logout() {
-    this.authService.logout().subscribe(() => {
-      this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+        this.router.navigate(['/login']);
+      }
     });
   }
 }

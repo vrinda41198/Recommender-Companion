@@ -3,8 +3,8 @@ from flask import Blueprint, jsonify, request
 from app.models import User, Movies, Books, UserBooksRead, UserMoviesWatched
 from app import db
 from app.middleware import user_required, admin_required
-# from uuid import uuid4
 import logging
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO) 
 
@@ -297,69 +297,87 @@ def mock_llm_response(watched_movies, read_books):
 #             "message": "Internal server error"
 #         }), 500
 
-
-
 @main.route('/api/movies', methods=['POST'])
 @admin_required
 def add_movie():
     data = request.get_json()
     
-    # Validate required fields
-    required_fields = ['title', 'cast', 'description', 'release_year', 'genre']
+    # Validate required fields including id
+    required_fields = ['id', 'title', 'director', 'cast', 'release_date', 'original_language', 'genres']
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
     
-    # Get user email from token claims
-    user_email = request.token_data.get('email') or request.token_data.get('preferred_username')
-    
-    # Create new movie
-    movie = Movies(
-        title=data['title'],
-        cast=data['cast'],
-        description=data['description'],
-        release_year=data['release_year'],
-        genre=data['genre'],
-        created_by=user_email
-    )
-    
-    db.session.add(movie)
-    db.session.commit()
-    
-    return jsonify({
-        "status": "success",
-        "data": movie.to_dict()
-    }), 201
+    try:
+        # Check if movie with this ID already exists
+        existing_movie = Movies.query.get(data['id'])
+        if existing_movie:
+            return jsonify({'error': 'Movie with this ID already exists'}), 400
+
+        # Convert release_date string to Date object
+        release_date = datetime.strptime(data['release_date'], '%Y-%m-%d').date()
+        
+        # Create new movie with provided ID
+        movie = Movies(
+            id=data['id'],  # Use the provided TMDB ID
+            title=data['title'],
+            director=data['director'],
+            cast=data['cast'],
+            release_date=release_date,
+            original_language=data['original_language'],
+            genres=data['genres'],
+            poster_path=data.get('poster_path')
+        )
+        
+        db.session.add(movie)
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "data": movie.to_dict()
+        }), 201
+        
+    except ValueError as e:
+        return jsonify({'error': f'Invalid date format: {str(e)}'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @main.route('/api/books', methods=['POST'])
 @admin_required
 def add_book():
     data = request.get_json()
     
-    # Validate required fields
-    required_fields = ['title', 'author', 'description', 'publish_year', 'genre']
+    # Validate required fields including isbn
+    required_fields = ['isbn', 'book_title', 'book_author', 'year_of_publication']
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
     
-    # Get user email from token claims
-    user_email = request.token_data.get('email') or request.token_data.get('preferred_username')
-    
-    # Create new book
-    book = Books(
-        title=data['title'],
-        author=data['author'],
-        description=data['description'],
-        publish_year=data['publish_year'],
-        genre=data['genre'],
-        created_by=user_email
-    )
-    
-    db.session.add(book)
-    db.session.commit()
-    
-    return jsonify({
-        "status": "success",
-        "data": book.to_dict()
-    }), 201
+    try:
+        # Check if book with this ISBN already exists
+        existing_book = Books.query.get(data['isbn'])
+        if existing_book:
+            return jsonify({'error': 'Book with this ISBN already exists'}), 400
+
+        # Create new book with provided ISBN
+        book = Books(
+            isbn=data['isbn'],
+            book_title=data['book_title'],
+            book_author=data['book_author'],
+            year_of_publication=data['year_of_publication'],
+            image_url_s=data.get('image_url_s')
+        )
+        
+        db.session.add(book)
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "data": book.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @main.errorhandler(404)
 def not_found_error(error):
