@@ -4,6 +4,7 @@ export interface BaseItem {
     title: string;
     type: string;
     book_title: string;
+    user_rating: number
 }
 
 // Base interface for recommendations
