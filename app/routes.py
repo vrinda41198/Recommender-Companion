@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 
+from sqlalchemy import text
 from app.models import User, Movies, Books, UserBooksRead, UserMoviesWatched
 from app import db
 from app.middleware import user_required, admin_required
@@ -7,8 +8,6 @@ import logging
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO) 
-
-
 
 main = Blueprint('main', __name__)
 
@@ -44,7 +43,6 @@ def get_listings():
         "data": data
     }), 200
 
-from sqlalchemy import text
 
 def get_global_list(tab_type, search_query, limit):
     logging.info("global list called")
@@ -77,6 +75,7 @@ def get_global_list(tab_type, search_query, limit):
     return movies + books
 
 
+
 def get_user_list(email, tab_type, search_query, limit):
     movies = []
     books = []
@@ -89,7 +88,7 @@ def get_user_list(email, tab_type, search_query, limit):
         logging.info("entering movie tab type")
         logging.info("email is %s", email)
         
-        # Base query for user's movies
+        # Base query for user's movies with full join to get rating
         query = db.session.query(UserMoviesWatched, Movies).filter(
             UserMoviesWatched.movie_id == Movies.id,
             UserMoviesWatched.email == email
@@ -105,13 +104,17 @@ def get_user_list(email, tab_type, search_query, limit):
 
         logging.info("Query executed, moviesItem: %s", moviesItem)
 
-        movies = [movie.to_dict() for _, movie in moviesItem]
+        # Include user_rating in the movie dictionary
+        movies = [
+            {**movie.to_dict(), "user_rating": user_movie.user_rating} 
+            for user_movie, movie in moviesItem
+        ]
     
     if tab_type == 'book' or tab_type == '':
         logging.info("entering book tab type")
         logging.info("email is %s", email)
 
-        # Base query for user's books
+        # Base query for user's books with full join to get rating
         query = db.session.query(UserBooksRead, Books).filter(
             UserBooksRead.isbn == Books.isbn,
             UserBooksRead.email == email
@@ -127,7 +130,11 @@ def get_user_list(email, tab_type, search_query, limit):
 
         logging.info("Query executed, booksItem: %s", booksItem)
 
-        books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for _, book in booksItem]
+        # Include user_rating in the book dictionary
+        books = [
+            {**{**book.to_dict(), "id": book.to_dict().pop("isbn")}, "user_rating": user_book.user_rating} 
+            for user_book, book in booksItem
+        ]
 
     return movies + books
 
