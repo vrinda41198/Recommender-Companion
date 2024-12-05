@@ -1,10 +1,12 @@
+import os  # Add this import at the top with other imports
+from openai import OpenAI
+import logging
 from flask import Blueprint, jsonify, request
-
+import json
 from sqlalchemy import text
 from app.models import User, Movies, Books, UserBooksRead, UserMoviesWatched
 from app import db
 from app.middleware import user_required, admin_required
-import logging
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO) 
@@ -221,6 +223,57 @@ def delete_item(id,type):
         "message": f"Item with ID {id} has been deleted from the user's database."
     }), 200
 
+def get_user_items(user_email, tab_type):
+    """Get user's watched movies and/or read books with ratings, along with user age."""
+    try:
+        items = []
+        
+        # Get user age from the User table
+        user = User.query.filter_by(email=user_email).first()
+        user_age = user.age if user else None
+        
+        if tab_type in ['all', 'movie']:
+            movies = db.session.query(
+                UserMoviesWatched, Movies
+            ).join(
+                Movies, UserMoviesWatched.movie_id == Movies.id
+            ).filter(
+                UserMoviesWatched.email == user_email
+            ).all()
+            
+            for user_movie, movie in movies:
+                item = {
+                    'type': 'movie',
+                    'title': movie.title,
+                    'rating': user_movie.user_rating,
+                    'genres': movie.genres,
+                    'director': movie.director,
+                }
+                items.append(item)
+
+        if tab_type in ['all', 'book']:
+            books = db.session.query(
+                UserBooksRead, Books
+            ).join(
+                Books, UserBooksRead.isbn == Books.isbn
+            ).filter(
+                UserBooksRead.email == user_email
+            ).all()
+            
+            for user_book, book in books:
+                item = {
+                    'type': 'book',
+                    'title': book.book_title,
+                    'rating': user_book.user_rating,
+                    'author': book.book_author,
+                }
+                items.append(item)
+        
+        return items, user_age
+
+    except Exception as e:
+        logging.error(f"Error getting user items: {str(e)}")
+        return [], None
 
 @main.route('/api/<type>s/<id>', methods=['PUT'])
 @user_required
@@ -299,42 +352,87 @@ def update_item_rating(id, type):
 @main.route('/api/generate-recommendation', methods=['GET'])
 @user_required
 def generate_recommendations():
-    user_email = request.token_data.get('email')
+    try:
+        api_key = os.getenv('OPENAI_API_KEY')
+        client = OpenAI(api_key=api_key)
+        
+        tab_type = request.args.get('type', 'all').lower()
+        if tab_type == 'movies':
+            tab_type = 'movie'
+        elif tab_type == 'books':
+            tab_type = 'book'
 
-    # Fetch user's watched movies and read books
-    watched_movies = UserMoviesWatched.query.filter_by(email=user_email).all()
-    read_books = UserBooksRead.query.filter_by(email=user_email).all()
+        user_email = request.token_data.get('email')
+        
+        if not user_email:
+            return jsonify({"status": "error", "message": "User email not found"}), 401
 
-    # Construct a mock prompt for an LLM
-    prompt = "Based on the following user interests:\n"
-    for movie in watched_movies:
-        movie_data = Movies.query.get(movie.movie_id)
-        prompt += f"Movie: {movie_data.title}, Rating: {movie.user_rating}\n"
-    for book in read_books:
-        book_data = Books.query.get(book.isbn)
-        prompt += f"Book: {book_data.book_title}, Rating: {book.user_rating}\n"
+        # Get user's watched/read items with ratings and age
+        user_items, user_age = get_user_items(user_email, tab_type)
+        if not user_items:
+            return jsonify({
+                "status": "success",
+                "data": []
+            }), 200
 
-    # Mock response generation (as if received from an LLM)
-    recommendations = mock_llm_response(watched_movies, read_books)
+        # Prepare age-specific content guidance
+        age_guidance = ""
+        if user_age:
+            if user_age < 13:
+                age_guidance = "Please ensure all recommendations are appropriate for children under 13. Focus on family-friendly content."
+            elif user_age < 18:
+                age_guidance = "Please ensure all recommendations are appropriate for teenagers. Avoid mature or explicit content."
+            else:
+                age_guidance = f"The user is {user_age} years old. Consider age-appropriate content and themes that might resonate with this age group."
 
-    return jsonify({
-        "status": "success",
-        "data": recommendations,
-        "prompt": prompt  # Optionally include the prompt in the response for debugging
-    }), 200
+        # Call OpenAI API with the client instance and include age guidance
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a recommendation system expert."},
+                {"role": "user", "content": f"""Based on the user's ratings, preferences, and age shown below, generate personalized recommendations.
+                Focus on {tab_type} recommendations. Sort the recommendations based on confidence.
+                
+                User's age context: {age_guidance}
+                
+                User's history:
+                {json.dumps(user_items, indent=2)}
+                
+                Return exactly 10 recommendations in the below JSON format. Please be very careful with this JSON format. I am reading this JSON format
+                programmatically, so if format is not correct, everything will fail. Your response should be just like a JSON response of an API call. Assume
+                you are an API returning JSON.
+                {{"recommendations": [
+                    {{
+                        "type": "movie"|"book",
+                        "title": string,
+                        "confidence": float (0-1),
+                        "description": string,
+                        "genre": string,
+                        "cast": [string] (for movies),
+                        "author": string (for books)
+                    }}
+                ]}}"""}
+            ],
+            temperature=0.7,
+            max_tokens=2000
+        )
 
-def mock_llm_response(watched_movies, read_books):
-    # Simulate a response from an LLM based on the user's history
-    # This is a very basic example and should be expanded based on actual recommendation logic
-    recommendations = []
-    if watched_movies:
-        recommendations.append({"type": "movie", "title": "Recommended Movie"})
-    if read_books:
-        recommendations.append({"type": "book", "title": "Recommended Book"})
-    return recommendations
+        # Parse the response
+        result = json.loads(response.choices[0].message.content)
+        recommendations = result.get('recommendations', [])
 
+        return jsonify({
+            "status": "success",
+            "data": recommendations[:10]  # Ensure we only return 10 items
+        }), 200
 
-
+    except Exception as e:
+        logging.error(f"Error generating recommendations: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to generate recommendations: {str(e)}"
+        }), 500
+    
 # @main.route('/api/listings', methods=['GET'])
 # @user_required
 # def get_listings():

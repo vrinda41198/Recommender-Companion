@@ -3,13 +3,14 @@ import subprocess
 import argparse
 import os
 
-def start_application(tenant_id: str, client_id: str, client_secret: str):
+def start_application(tenant_id: str, client_id: str, client_secret: str, openapi_key: str):
     """Start the application using docker-compose with environment variables"""
     try:
         env = {
             'MICROSOFT_TENANT_ID': tenant_id,
             'MICROSOFT_CLIENT_ID': client_id,
             'MICROSOFT_CLIENT_SECRET': client_secret,
+            'OPENAI_API_KEY': openapi_key,
             **os.environ  # Include existing environment variables
         }
         
@@ -30,12 +31,13 @@ def main():
     parser.add_argument('tenant_id', help='Microsoft Azure Tenant ID')
     parser.add_argument('client_id', help='Microsoft Azure Client ID')
     parser.add_argument('client_secret', help='Microsoft Azure Client Secret')
+    parser.add_argument('openapi_key', help='Open API Key')
     
     args = parser.parse_args()
     
     try:
         print("Starting application...")
-        start_application(args.tenant_id, args.client_id, args.client_secret)
+        start_application(args.tenant_id, args.client_id, args.client_secret, args.openapi_key)
         
     except Exception as e:
         print(f"Error: {e}")

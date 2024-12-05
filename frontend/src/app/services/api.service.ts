@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
 import { Movie, Book, ApiResponse, Review, Recommendation } from '../models';
 
 @Injectable({
@@ -49,9 +50,21 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/${type}s/${id}`, data);
   }
 
-  generateRecommendations(): Observable<Recommendation[]> {
-    return this.http.get<Recommendation[]>(`${this.baseUrl}/generate-recommendation`);
-  }
+  generateRecommendations(type: 'all' | 'movies' | 'books' = 'all'): Observable<ApiResponse<Recommendation>> {
+    // Convert plural form to singular for the backend
+    const backendType = type === 'all' ? 'all' : type.slice(0, -1);
+    const params = new HttpParams().set('type', backendType);
+    
+    return this.http.get<ApiResponse<Recommendation>>(
+        `${this.baseUrl}/generate-recommendation`,
+        { params }
+    ).pipe(
+        catchError(error => {
+            console.error('Error generating recommendations:', error);
+            return throwError(() => new Error('Failed to generate recommendations'));
+        })
+    );
+}
 
   updateUserAge(age: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/user/age`, { age });

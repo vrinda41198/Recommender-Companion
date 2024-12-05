@@ -7,7 +7,6 @@ export interface BaseItem {
     user_rating: number
 }
 
-// Base interface for recommendations
 export interface BaseRecommendation {
     id: number;
     title: string;
@@ -16,6 +15,18 @@ export interface BaseRecommendation {
     genre: string;
     type: 'movie' | 'book';
 }
+
+export interface MovieRecommendation extends BaseRecommendation {
+    type: 'movie';
+    cast: string[];
+}
+
+export interface BookRecommendation extends BaseRecommendation {
+    type: 'book';
+    author: string;
+}
+
+export type Recommendation = MovieRecommendation | BookRecommendation;
 
 export interface Movie extends BaseItem {
     release_year: number;
@@ -35,18 +46,6 @@ export interface Book extends BaseItem {
     isbn: number;
     year_of_publication: number
 }
-
-export interface MovieRecommendation extends BaseRecommendation {
-    cast: string[];
-    type: 'movie';
-}
-
-export interface BookRecommendation extends BaseRecommendation {
-    author: string;
-    type: 'book';
-}
-
-export type Recommendation = MovieRecommendation | BookRecommendation;
 
 export interface Review {
     itemId: number;

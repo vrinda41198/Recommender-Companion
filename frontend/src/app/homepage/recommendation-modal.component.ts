@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api.service';
 import { Recommendation, isMovieRecommendation, isBookRecommendation } from '../models';
@@ -38,14 +38,17 @@ import { Recommendation, isMovieRecommendation, isBookRecommendation } from '../
                 <div class="confidence-badge" [style.background-color]="getConfidenceColor(item.confidence)">
                   {{(item.confidence * 100).toFixed(0)}}% Match
                 </div>
+                <div *ngIf="activeTab === 'all'" class="type-badge" [class.movie]="isMovieRecommendation(item)" [class.book]="isBookRecommendation(item)">
+                  {{item.type | titlecase}}
+                </div>
                 <h3 class="item-title">{{item.title}}</h3>
-                <p *ngIf="isBookRecommendation(item)" class="detail">
+                <p *ngIf="isBookRecommendation(item) && item.author" class="detail">
                   <span class="label">Author:</span> {{item.author}}
                 </p>
-                <p *ngIf="isMovieRecommendation(item)" class="detail">
+                <p *ngIf="isMovieRecommendation(item) && item.cast?.length" class="detail">
                   <span class="label">Cast:</span> {{item.cast.join(', ')}}
                 </p>
-                <p class="detail">
+                <p *ngIf="item.genre" class="detail">
                   <span class="label">Genre:</span> {{item.genre}}
                 </p>
                 <p class="description">{{item.description}}</p>
@@ -176,6 +179,26 @@ import { Recommendation, isMovieRecommendation, isBookRecommendation } from '../
       font-weight: 500;
     }
 
+    .type-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .type-badge.movie {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+
+    .type-badge.book {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
     .item-title {
       font-size: 1.125rem;
       font-weight: 600;
@@ -249,7 +272,7 @@ import { Recommendation, isMovieRecommendation, isBookRecommendation } from '../
     }
   `]
 })
-export class RecommendationModalComponent {
+export class RecommendationModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   readonly tabs = ['all', 'movies', 'books'] as const;
@@ -267,6 +290,7 @@ export class RecommendationModalComponent {
 
   setTab(tab: typeof this.tabs[number]) {
     this.activeTab = tab;
+    this.generateRecommendations();
   }
 
   get filteredRecommendations(): Recommendation[] {
@@ -278,13 +302,19 @@ export class RecommendationModalComponent {
 
   generateRecommendations() {
     this.isLoading = true;
-    this.apiService.generateRecommendations().subscribe({
-      next: (recommendations) => {
-        this.recommendations = recommendations;
+    this.apiService.generateRecommendations(this.activeTab).subscribe({
+      next: (response) => {
+        if (response && response.data) {
+          console.log('Recommendations received:', response.data);
+          this.recommendations = response.data;
+        } else {
+          this.recommendations = [];
+        }
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error generating recommendations:', error);
+        this.recommendations = [];
         this.isLoading = false;
       }
     });

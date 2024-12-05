@@ -13,6 +13,7 @@ services:
       - MICROSOFT_TENANT_ID
       - MICROSOFT_CLIENT_ID
       - MICROSOFT_CLIENT_SECRET
+      - OPENAI_API_KEY
 
     volumes:
       - .:/app
