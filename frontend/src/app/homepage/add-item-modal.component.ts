@@ -38,7 +38,7 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
             >
               <h3>{{item.title}}</h3>
               <p *ngIf="isBook(item)">by {{item.book_author}}</p>
-              <p *ngIf="isMovie(item)">Cast: {{item.cast.join(', ')}}</p>
+              <p *ngIf="isMovie(item)">Cast: {{item.cast}}</p>
             </div>
           </div>
 
@@ -280,7 +280,9 @@ export class AddItemModalComponent {
 
     this.apiService.getListings(this.itemType, true, this.searchQuery).subscribe({
       next: (response) => {
+        
         this.searchResults = response.data || [];
+  
       },
       error: (error) => {
         console.error('Search error:', error);
