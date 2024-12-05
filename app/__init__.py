@@ -1,22 +1,20 @@
 from flask import Flask
-from app.config import Config
+from app.config import Config, TestingConfig
 from app.extensions import db
 
-def create_app():
+def create_app(config_name=None):
     app = Flask(__name__)
-    app.config.from_object(Config)
     
-    # Initialize extensions
+    if config_name == 'testing':
+        app.config.from_object(TestingConfig)
+    else:
+        app.config.from_object(Config)
+
     db.init_app(app)
 
-    # Register blueprints
     from app.auth import auth
     from app.routes import main
-    
-    app.register_blueprint(main)
     app.register_blueprint(auth)
-
-    with app.app_context():
-        db.create_all()
-        
+    app.register_blueprint(main)
+    
     return app

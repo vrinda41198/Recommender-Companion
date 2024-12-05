@@ -102,3 +102,32 @@ docker-compose logs
 # Access the MySQL shell
 docker-compose exec db mysql -uuser -ppassword rc_db
 ```
+
+## Running Tests
+
+### Setup Testing Environment
+1. Install required packages:
+```bash
+pip install -r requirements.txt
+pip install pytest
+pip install PyJWT
+```
+
+### Running Tests
+1. Run all tests:
+```bash
+pytest tests/test.py -v
+```
+
+2. Run specific test:
+```bash
+pytest tests/test.py -v -k "test_health_check"
+```
+
+3. Run with coverage:
+```bash
+pip install pytest-cov
+pytest --cov=app tests/test.py
+```
+
+Tests cover API endpoints, authentication, database operations, and recommendation engine functionality.

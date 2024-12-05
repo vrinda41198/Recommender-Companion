@@ -19,3 +19,10 @@ class Config:
     MICROSOFT_AUTH_ENDPOINT = f'{MICROSOFT_AUTHORITY}/oauth2/v2.0/authorize'
     MICROSOFT_TOKEN_ENDPOINT = f'{MICROSOFT_AUTHORITY}/oauth2/v2.0/token'
     MICROSOFT_SCOPES = ['openid', 'profile', 'email', 'User.Read']
+
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    MICROSOFT_CLIENT_ID = 'test-client-id'
+    MICROSOFT_CLIENT_SECRET = 'test-client-secret'
