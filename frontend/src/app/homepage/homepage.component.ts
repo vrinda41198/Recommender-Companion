@@ -124,8 +124,21 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
                 
                 <p *ngIf="isMovie(item)" class="detail-row"><strong>Director: </strong>{{ item.director }}</p>
                 <p *ngIf="isMovie(item)" class="detail-row"><strong>Language: </strong>{{ item.original_language }}</p>
-                <p *ngIf="isMovie(item)" class="detail-row"><strong>Release Date: </strong>{{ item.release_date }}</p>
+                <p *ngIf="isMovie(item)" class="detail-row"><strong>Release Date: </strong>{{ getYearFromDateString(item.release_date) }}</p>
                 <p *ngIf="isMovie(item)" class="detail-row"><strong>Genres: </strong> {{ item.genres }}</p>
+
+              <p class="detail-row">
+                <strong>Your Rating: </strong>
+                <span class="star-rating">
+                  <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+                    <i
+                      class="star"
+                      [class.filled]="star <= item.user_rating"
+                      aria-hidden="true"
+                    >★</i>
+                  </ng-container>
+                </span>
+              </p>
                
               </div>
             </div>
@@ -246,6 +259,21 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
       background-color: #2563eb;
       color: white;
     }
+
+    .star-rating {
+        display: inline-block;
+        font-size: 1.5rem; /* Adjust the size of the stars */
+        color: #d1d5db; /* Default color for unselected stars */
+    }
+
+      .star {
+        cursor: default; /* Make stars non-clickable in display mode */
+      }
+
+      .star.filled {
+        color: #fbbf24; /* Color for filled stars (e.g., gold) */
+      }
+
 
     .search-container {
       max-width: 600px;
@@ -557,6 +585,12 @@ export class HomepageComponent implements OnInit {
     });
   }
 
+  getYearFromDateString(dateString: string): string {
+    if (!dateString) return ''; // Handle empty or invalid date
+    const date = new Date(dateString); // Parse the date string
+    return isNaN(date.getTime()) ? '' : date.getFullYear().toString(); // Extract the year
+  }
+  
   toggleOptions(index: number, event: MouseEvent) {
     event.stopPropagation(); // Prevent the click from propagating to the document
     this.showOptions = this.showOptions === index ? null : index;
