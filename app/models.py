@@ -1,5 +1,5 @@
-from app import db
-from datetime import datetime, timezone
+from datetime import datetime
+from .extensions import db
 
 class User(db.Model):
     __tablename__ = 'rc_user'
@@ -8,10 +8,18 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     age = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    onboarding_completed = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f'<User {self.email}>'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'display_name': self.display_name,
+            'email': self.email,
+            'onboarding_completed': self.onboarding_completed
+        }
 
 class Movies(db.Model):
     __tablename__ = 'movies'

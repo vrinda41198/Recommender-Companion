@@ -3,10 +3,28 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, tap, of, finalize } from 'rxjs';
 
+export interface OnboardingStatus {
+  onboardingCompleted: boolean;
+  progress: {
+    movies: number;
+    books: number;
+    required: {
+      movies: number;
+      books: number;
+    };
+  };
+}
+
+export interface AuthCallbackResponse {
+  user: User;
+}
+
 export interface User {
   displayName: string;
   email: string;
   role: string;
+  isNewUser: boolean;
+  onboardingCompleted: boolean;
 }
 
 export interface AuthState {
@@ -49,13 +67,31 @@ export class AuthService {
     return this.http.get<{auth_url: string}>(`${this.BASE_URL}/login`);
   }
 
-  handleCallback(code: string, state: string): Observable<any> {
+  getOnboardingStatus(): Observable<OnboardingStatus> {
+    return this.http.get<OnboardingStatus>(`${this.BASE_URL}/onboarding-status`);
+  }
+
+  completeOnboarding(): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/complete-onboarding`, {});
+  }
+
+  handleCallback(code: string, state: string): Observable<AuthCallbackResponse> {
     this.processingCallback = true;
     this.setLoading(true);
     
-    return this.http.post(`${this.BASE_URL}/callback`, { code, state }).pipe(
+    return this.http.post<AuthCallbackResponse>(`${this.BASE_URL}/callback`, { code, state }).pipe(
       tap(response => {
         this.handleAuthSuccess(response);
+        
+        // Check onboarding status
+        if (response.user.role !== 'admin' && 
+            (!response.user.onboardingCompleted || response.user.isNewUser)) {
+          this.router.navigate(['/welcome']);
+        } else if (response.user.role === 'admin') {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/home']);
+        }
       }),
       catchError(error => {
         console.error('Auth callback error:', error);
@@ -66,7 +102,16 @@ export class AuthService {
           isLoading: false
         });
         this.router.navigate(['/login']);
-        return of(null);
+        // Return an empty/default response instead of null
+        return of({
+          user: {
+            displayName: '',
+            email: '',
+            role: '',
+            onboardingCompleted: false,
+            isNewUser: false
+          }
+        });
       }),
       finalize(() => {
         this.processingCallback = false;
@@ -75,15 +120,23 @@ export class AuthService {
     );
   }
 
-  checkAuthStatus(): Observable<any> {
+  checkAuthStatus(): Observable<AuthCallbackResponse> {
     if (this.checkingAuth || this.processingCallback) {
-      return of(null);
+      return of({
+        user: {
+          displayName: '',
+          email: '',
+          role: '',
+          onboardingCompleted: false,
+          isNewUser: false
+        }
+      });
     }
 
     this.checkingAuth = true;
     this.setLoading(true);
 
-    return this.http.get<{user: User}>(`${this.BASE_URL}/user`).pipe(
+    return this.http.get<AuthCallbackResponse>(`${this.BASE_URL}/user`).pipe(
       tap(response => this.handleAuthSuccess(response)),
       catchError(() => {
         // Only navigate to login if we're not processing a callback
@@ -96,7 +149,15 @@ export class AuthService {
           });
           this.router.navigate(['/login']);
         }
-        return of(null);
+        return of({
+          user: {
+            displayName: '',
+            email: '',
+            role: '',
+            onboardingCompleted: false,
+            isNewUser: false
+          }
+        });
       }),
       finalize(() => {
         this.checkingAuth = false;
@@ -133,7 +194,7 @@ export class AuthService {
     );
   }
 
-  private handleAuthSuccess(response: any): void {
+  private handleAuthSuccess(response: AuthCallbackResponse): void {
     if (response?.user) {
       this.updateAuthState({
         isLoggedIn: true,

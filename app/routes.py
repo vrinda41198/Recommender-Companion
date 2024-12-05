@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify, request
-from app.models import User, Movie, Book, MoviesWatched
+from app.models import User, Movies, Books, UserMoviesWatched
 from app import db
 from app.middleware import user_required, admin_required
 from uuid import uuid4
-from sqlalchemy.sql import text
 
 
 main = Blueprint('main', __name__)
@@ -20,15 +19,15 @@ def get_listings():
     
     # Query based on type
     if tab_type == 'movie':
-        items = Movie.query.all()
+        items = Movies.query.all()
         data = [item.to_dict() for item in items]
     elif tab_type == 'book':
-        items = Book.query.all()
+        items = Books.query.all()
         data = [item.to_dict() for item in items]
     else:
         # Get all items
-        movies = Movie.query.all()
-        books = Book.query.all()
+        movies = Movies.query.all()
+        books = Books.query.all()
         data = [item.to_dict() for item in movies + books]
     
     # Apply search filter if query exists
@@ -54,7 +53,7 @@ def add_movie():
     user_email = request.token_data.get('email') or request.token_data.get('preferred_username')
     
     # Create new movie
-    movie = Movie(
+    movie = Movies(
         title=data['title'],
         cast=data['cast'],
         description=data['description'],
@@ -85,7 +84,7 @@ def add_book():
     user_email = request.token_data.get('email') or request.token_data.get('preferred_username')
     
     # Create new book
-    book = Book(
+    book = Books(
         title=data['title'],
         author=data['author'],
         description=data['description'],
@@ -134,12 +133,12 @@ def add_movie_to_user():
     # or request.token_data.get('preferred_username')
     user_email = "ysh@gmail.com"
 
-    existing_entry = MoviesWatched.query.filter_by(email=user_email, movie_id=data['itemId']).first()
+    existing_entry = UserMoviesWatched.query.filter_by(email=user_email, movie_id=data['itemId']).first()
 
     if existing_entry:
         return jsonify({'error': 'Movie is already present in the database for this user. Cannot enter again.'}), 400
 
-    new_entry = MoviesWatched(
+    new_entry = UserMoviesWatched(
         uuid=str(uuid4()),
         email=user_email,
         movie_id=data['itemId'],
