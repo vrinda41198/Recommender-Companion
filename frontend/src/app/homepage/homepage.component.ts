@@ -588,7 +588,9 @@ export class HomepageComponent implements OnInit {
         this.fetchResults();
       },
       error: (error) => {
+        this.showModal = false;
         console.error('Error submitting review:', error);
+        alert('Movie already added.'); // Show a popup alert
       }
     });
   }
