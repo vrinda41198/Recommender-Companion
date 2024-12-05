@@ -1,20 +1,19 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from app.config import Config
-from app.auth import auth
-
-db = SQLAlchemy()
+from app.extensions import db
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
+    # Initialize extensions
     db.init_app(app)
 
-    from app.routes import main
-    app.register_blueprint(main)
-
     # Register blueprints
+    from app.auth import auth
+    from app.routes import main
+    
+    app.register_blueprint(main)
     app.register_blueprint(auth)
 
     with app.app_context():

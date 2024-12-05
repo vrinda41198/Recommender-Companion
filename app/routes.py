@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+
 from app.models import User, Movies, Books, UserBooksRead, UserMoviesWatched
 from app import db
 from app.middleware import user_required, admin_required
@@ -6,6 +7,7 @@ from app.middleware import user_required, admin_required
 import logging
 
 logging.basicConfig(level=logging.INFO) 
+
 
 
 main = Blueprint('main', __name__)
@@ -28,6 +30,7 @@ def get_listings():
     data = []
 
     logging.info("global_search value %s",global_search)
+
     
     # if global_search is true we need to search from add movies to watch tab, and in the global database
     if global_search:
