@@ -189,41 +189,100 @@ def delete_item(id,type):
 
 
 @main.route('/api/generate-recommendation', methods=['GET'])
-@user_required
+#@user_required
 def generate_recommendations():
-    user_email = request.token_data.get('email')
+    #tab_type = request.args.get('type', '').lower()  # Get tab type from query params
+    
+    #user_email = request.token_data.get('email')
+    user_email = "ysharma@umass.edu"  # Replace with `request.token_data.get('email')` in production
 
     # Fetch user's watched movies and read books
     watched_movies = UserMoviesWatched.query.filter_by(email=user_email).all()
     read_books = UserBooksRead.query.filter_by(email=user_email).all()
 
     # Construct a mock prompt for an LLM
-    prompt = "Based on the following user interests:\n"
-    for movie in watched_movies:
-        movie_data = Movies.query.get(movie.movie_id)
-        prompt += f"Movie: {movie_data.title}, Rating: {movie.user_rating}\n"
-    for book in read_books:
-        book_data = Books.query.get(book.isbn)
-        prompt += f"Book: {book_data.book_title}, Rating: {book.user_rating}\n"
+    # prompt = "Based on the following user interests:\n"
+    # if tab_type in ['', 'movie']:
+    #     for movie in watched_movies:
+    #         movie_data = Movies.query.get(movie.movie_id)
+    #         prompt += f"Movie: {movie_data.title}, Rating: {movie.user_rating}\n"
+    # if tab_type in ['', 'book']:
+    #     for book in read_books:
+    #         book_data = Books.query.get(book.isbn)
+    #         prompt += f"Book: {book_data.book_title}, Rating: {book.user_rating}\n"
 
-    # Mock response generation (as if received from an LLM)
-    recommendations = mock_llm_response(watched_movies, read_books)
+    # Generate recommendations based on tab type
+
+    tab_type = request.args.get('type', '')
+    logging.info("tab type %s", tab_type)
+
+    recommendations = mock_llm_response(watched_movies, read_books, tab_type)
 
     return jsonify({
         "status": "success",
-        "data": recommendations,
-        "prompt": prompt  # Optionally include the prompt in the response for debugging
+        "data": recommendations
     }), 200
 
-def mock_llm_response(watched_movies, read_books):
-    # Simulate a response from an LLM based on the user's history
-    # This is a very basic example and should be expanded based on actual recommendation logic
+
+def mock_llm_response(watched_movies, read_books, tab_type):
+    """
+    Generate recommendations based on similar titles of watched movies and read books.
+    Handles filtering based on tab type: all, movie, or book.
+    """
+
     recommendations = []
-    if watched_movies:
-        recommendations.append({"type": "movie", "title": "Recommended Movie"})
-    if read_books:
-        recommendations.append({"type": "book", "title": "Recommended Book"})
-    return recommendations
+
+    # Generate movie recommendations if tab type is all or movie
+    if tab_type in ['all', 'movies']:
+        for watched_movie in watched_movies:
+            movie_data = Movies.query.get(watched_movie.movie_id)
+            if movie_data:
+                similar_movies = Movies.query.filter(
+                    Movies.title.ilike(f"%{movie_data.title}%")
+                ).all()
+                recommendations.extend(
+                    [
+                        {
+                            "type": "movie",
+                            "title": m.title,
+                            "cast": m.cast.split(', '),  # Ensure it's a list
+                            "confidence": 0.8,  # Mock confidence value
+                            "genre": m.genre if hasattr(m, 'genre') else "Unknown",
+                            "description": m.description if hasattr(m, 'description') else "No description available."
+                        }
+                        for m in similar_movies
+                        if m.id != movie_data.id  # Exclude the already watched movie
+                    ]
+                )
+
+    # Generate book recommendations if tab type is all or book
+    if tab_type in ['all', 'books']:
+        for read_book in read_books:
+            book_data = Books.query.get(read_book.isbn)
+            if book_data:
+                similar_books = Books.query.filter(
+                    Books.book_title.ilike(f"%{book_data.book_title}%")
+                ).all()
+                recommendations.extend(
+                    [
+                        {
+                            "type": "book",
+                            "title": b.book_title,
+                            "author": b.book_author,
+                            "confidence": 0.7,  # Mock confidence value
+                            "genre": b.genre if hasattr(b, 'genre') else "Unknown",
+                            "description": b.description if hasattr(b, 'description') else "No description available."
+                        }
+                        for b in similar_books
+                        if b.isbn != book_data.isbn  # Exclude the already read book
+                    ]
+                )
+
+    # Limit recommendations to 10 for simplicity
+    return recommendations[:10]
+
+
+
 
 
 
