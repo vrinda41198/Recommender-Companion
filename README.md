@@ -114,6 +114,9 @@ pip install PyJWT
 ```
 
 ### Running Tests
+
+## Backend
+
 1. Run all tests:
 ```bash
 pytest tests/test.py -v
@@ -129,5 +132,16 @@ pytest tests/test.py -v -k "test_health_check"
 pip install pytest-cov
 pytest --cov=app tests/test.py
 ```
+
+## Frontend
+
+1. Checkout to the frontend directory
+```bash
+cd frontend
+```
+
+2. Perform `npm install` if not done already.
+
+3. Run `npm run test:coverage`
 
 Tests cover API endpoints, authentication, database operations, and recommendation engine functionality.
