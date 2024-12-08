@@ -7,6 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:coverage": "ng test --code-coverage --no-watch --source-map=true",
     "serve:ssr:listing-ui": "node dist/listing-ui/server/server.mjs"
   },
   "private": true,
