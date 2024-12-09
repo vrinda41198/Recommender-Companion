@@ -1,4 +1,6 @@
 import os  # Add this import at the top with other imports
+
+from flask_sqlalchemy.pagination import Pagination
 from openai import OpenAI
 import logging
 from flask import Blueprint, jsonify, request
@@ -21,140 +23,158 @@ def health_check():
     return jsonify({"status": "ok"}), 200
 
 
-# Endpoint to retrieve listings of movies and books
 @main.route('/api/listings', methods=['GET'])
 @user_required
 def get_listings():
-    # Determine the type of listing (movie, book, or both)
+
+    # Extract query parameters
     tab_type = request.args.get('type', '')
-    
-    # Check if global search is requested
-    global_search = request.args.get('search_global', '').lower() == 'true'
+    global_search = request.args.get('search_global', 'false').lower() == 'true'
+    search_query = request.args.get('query', '').strip().lower()
 
-    # Get search query for filtering results
-    search_query = request.args.get('query', '').lower()
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 1))
+        if page < 1 or per_page < 1:
+            raise ValueError
+    except ValueError:
+        logging.error("Invalid pagination parameters: page=%s, per_page=%s", request.args.get('page'), request.args.get('per_page'))
+        return jsonify({
+            "status": "error",
+            "message": "Invalid pagination parameters. 'page' and 'per_page' must be positive integers."
+        }), 400
 
-    # Set default limit for number of results
-    limit = 20
-    data = []
+    logging.info("Fetching listings - Type: %s, Global Search: %s, Query: '%s', Page: %s, Per Page: %s",
+                tab_type, global_search, search_query, page, per_page)
 
-    logging.info("global_search value %s",global_search)
-
-    
-    # Choose between global database search or user-specific list
+    # Fetch data based on global or user-specific search
     if global_search:
-        data =  get_global_list(tab_type,search_query,limit)
+        data, pagination = get_global_list(tab_type, search_query, page, per_page)
     else:
         user_email = request.token_data.get('email')
-        data = get_user_list(user_email, tab_type, search_query, limit)
-    
+        data, pagination = get_user_list(user_email, tab_type, search_query, page, per_page)
+
     return jsonify({
         "status": "success",
-        "data": data
+        "data": data,
+        "pagination": pagination
     }), 200
 
+def get_global_list(tab_type, search_query, page, per_page):
 
-# Function to retrieve items from the global database
-def get_global_list(tab_type, search_query, limit):
-    logging.info("global list called")
+    logging.info("Retrieving global list - Type: %s, Query: '%s', Page: %s, Per Page: %s",
+                tab_type, search_query, page, per_page)
 
-    movies = []
-    books = []
-    
-    # Retrieve movies based on tab type and search query
-    if tab_type == 'movie' or tab_type == '':
+    data = {}
+    pagination_data = {}
+
+    # Retrieve Movies
+    if tab_type in ['movie', '']:
+        movie_query = Movies.query
         if search_query:
-            # Use full-text search for movies with boolean mode
-            items = Movies.query.filter(
+            movie_query = movie_query.filter(
                 text("MATCH(title) AGAINST (:search IN BOOLEAN MODE)")
-            ).params(search=f'*{search_query}*').limit(limit).all()
-        else:
-            items = Movies.query.limit(limit).all()
-        movies = [item.to_dict() for item in items]
-        logging.info("Looking at movies %s", movies)
+            ).params(search=f'*{search_query}*')
 
-    # Retrieve books based on tab type and search query
-    if tab_type == 'book' or tab_type == '':
+        movie_pagination: Pagination = movie_query.order_by(Movies.id).paginate(page=page, per_page=per_page, error_out=False)
+        movies = [movie.to_dict() for movie in movie_pagination.items]
+        total_movies = movie_pagination.total
+
+        logging.info("Retrieved %s movies", len(movies))
+        data['movies'] = movies
+        pagination_data['movies'] = {
+            "current_page": movie_pagination.page,
+            "per_page": movie_pagination.per_page,
+            "total_pages": movie_pagination.pages,
+            "total_items": movie_pagination.total
+        }
+
+    # Retrieve Books
+    # if tab_type in ['book', '']:
+    #     book_query = Books.query
+    #     if search_query:
+    #         book_query = book_query.filter(
+    #             text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
+    #         ).params(search=f'*{search_query}*')
+    #
+    #     book_pagination: Pagination = book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
+    #     books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for book in book_pagination.items]
+    #     total_books = book_pagination.total
+    #
+    #     logging.info("Retrieved %s books", len(books))
+    #     data['books'] = books
+    #     pagination_data['books'] = {
+    #         "current_page": book_pagination.page,
+    #         "per_page": book_pagination.per_page,
+    #         "total_pages": book_pagination.pages,
+    #         "total_items": book_pagination.total
+    #     }
+
+    return data, pagination_data
+
+def get_user_list(email, tab_type, search_query, page, per_page):
+    logging.info("Retrieving user-specific list for email: %s - Type: %s, Query: '%s', Page: %s, Per Page: %s",
+                email, tab_type, search_query, page, per_page)
+
+    data = {}
+    pagination_data = {}
+
+    # Retrieve User's Movies
+    if tab_type in ['movie', '']:
+        user_movie_query = db.session.query(UserMoviesWatched, Movies).join(Movies, UserMoviesWatched.movie_id == Movies.id)\
+            .filter(UserMoviesWatched.email == email)
+
         if search_query:
-            # Use full-text search for books with boolean mode
-            items = Books.query.filter(
-                text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
-            ).params(search=f'*{search_query}*').limit(limit).all()
-        else:
-            items = Books.query.limit(limit).all()
-        books = [{**item.to_dict(), "id": item.to_dict().pop("isbn")} for item in items]
-    
-    logging.info("Looking at books %s", books)
-    return movies + books
-
-
-# Function to retrieve user-specific lists of movies and books
-def get_user_list(email, tab_type, search_query, limit):
-    movies = []
-    books = []
-    email = request.token_data.get('email')
-
-    logging.info("user list called")
-    logging.info("tab type %s", tab_type)
-
-    # Retrieve user's movies with their ratings
-    if tab_type == 'movie' or tab_type == '':
-        logging.info("entering movie tab type")
-        logging.info("email is %s", email)
-        
-        # Base query joining UserMoviesWatched with Movies
-        query = db.session.query(UserMoviesWatched, Movies).filter(
-            UserMoviesWatched.movie_id == Movies.id,
-            UserMoviesWatched.email == email
-        )
-        
-        # Apply full-text search if query exists
-        if search_query:
-            query = query.filter(
+            user_movie_query = user_movie_query.filter(
                 text("MATCH(Movies.title) AGAINST (:search IN BOOLEAN MODE)")
             ).params(search=f'*{search_query}*')
-        
-        moviesItem = query.limit(limit).all()
 
-        logging.info("Query executed, moviesItem: %s", moviesItem)
-
-        # Include user rating in movie dictionary
-        movies = [
-            {**movie.to_dict(), "user_rating": user_movie.user_rating} 
-            for user_movie, movie in moviesItem
+        user_movie_pagination: Pagination = user_movie_query.order_by(Movies.id).paginate(page=page, per_page=per_page, error_out=False)
+        user_movies = [
+            {**movie.to_dict(), "user_rating": user_movie.user_rating}
+            for user_movie, movie in user_movie_pagination.items
         ]
-    
-    # Retrieve user's books with their ratings
-    if tab_type == 'book' or tab_type == '':
-        logging.info("entering book tab type")
-        logging.info("email is %s", email)
+        total_movies = user_movie_pagination.total
 
-        # Base query joining UserBooksRead with Books
-        query = db.session.query(UserBooksRead, Books).filter(
-            UserBooksRead.isbn == Books.isbn,
-            UserBooksRead.email == email
-        )
-        
-        # Apply full-text search if query exists
-        if search_query:
-            query = query.filter(
-                text("MATCH(Books.book_title) AGAINST (:search IN BOOLEAN MODE)")
-            ).params(search=f'*{search_query}*')
-        
-        booksItem = query.limit(limit).all()
+        logging.info("Retrieved %s user-specific movies", len(user_movies))
+        data['movies'] = user_movies
+        pagination_data['movies'] = {
+            "current_page": user_movie_pagination.page,
+            "per_page": user_movie_pagination.per_page,
+            "total_pages": user_movie_pagination.pages,
+            "total_items": user_movie_pagination.total
+        }
 
-        logging.info("Query executed, booksItem: %s", booksItem)
+    # Retrieve User's Books
+    # if tab_type in ['book', '']:
+    #     user_book_query = db.session.query(UserBooksRead, Books).join(Books, UserBooksRead.isbn == Books.isbn)\
+    #         .filter(UserBooksRead.email == email)
+    #
+    #     if search_query:
+    #         user_book_query = user_book_query.filter(
+    #             text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
+    #         ).params(search=f'*{search_query}*')
+    #
+    #     user_book_pagination: Pagination = user_book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
+    #     user_books = [
+    #         {**{**book.to_dict(), "id": book.to_dict().pop("isbn")}, "user_rating": user_book.user_rating}
+    #         for user_book, book in user_book_pagination.items
+    #     ]
+    #     total_books = user_book_pagination.total
+    #
+    #     logging.info("Retrieved %s user-specific books", len(user_books))
+    #     data['books'] = user_books
+    #     pagination_data['books'] = {
+    #         "current_page": user_book_pagination.page,
+    #         "per_page": user_book_pagination.per_page,
+    #         "total_pages": user_book_pagination.pages,
+    #         "total_items": user_book_pagination.total
+    #     }
 
-        # Include user rating in book dictionary
-        books = [
-            {**{**book.to_dict(), "id": book.to_dict().pop("isbn")}, "user_rating": user_book.user_rating} 
-            for user_book, book in booksItem
-        ]
-
-    return movies + books
+    return data, pagination_data
 
 
-# Endpoint to add a movie or book to user's watched/read list with a rating
+#Endpoint to add a movie or book to user's watched/read list with a rating
 @main.route('/api/reviews', methods=['POST'])
 @user_required
 def add_item_to_user():
@@ -173,7 +193,7 @@ def add_item_to_user():
         existing_entry = UserMoviesWatched.query.filter_by(email=user_email, movie_id=data['itemId']).first()
         if existing_entry:
             return jsonify({'error': 'Movie is already present in the database for this user. Cannot enter again.'}), 400
-        
+
         # Create new movie entry
         new_entry = UserMoviesWatched(
             email=user_email,
@@ -188,7 +208,7 @@ def add_item_to_user():
         existing_entry = UserBooksRead.query.filter_by(email=user_email, isbn=data['itemId']).first()
         if existing_entry:
             return jsonify({'error': 'Book is already present in the database for this user. Cannot enter again.'}), 400
-        
+
         logging.info("Adding item ", data['itemId'])
         # Create new book entry
         new_entry = UserBooksRead(
@@ -197,13 +217,13 @@ def add_item_to_user():
             user_rating=data['rating']
         )
         db.session.add(new_entry)
-    
+
     else:
         return jsonify({'error': 'Invalid item type specified'}), 400
 
     # Commit the new entry to the database
     db.session.commit()
-    
+
     return jsonify({
         "status": "success",
         "message": f"{data['itemType'].capitalize()} has been added to the user's database.",
