@@ -146,24 +146,42 @@ def get_user_list(email, tab_type, search_query, page, per_page):
         }
 
     # Retrieve User's Books
+    # Check if the current tab type is 'book' or if no specific type is provided
     if tab_type in ['book', '']:
-        user_book_query = db.session.query(UserBooksRead, Books).join(Books, UserBooksRead.isbn == Books.isbn)\
+        # Construct a query to retrieve books read by the user
+        user_book_query = db.session.query(UserBooksRead, Books) \
+            .join(Books, UserBooksRead.isbn == Books.isbn) \
             .filter(UserBooksRead.email == email)
 
+        # If a search query is provided, apply a full-text search filter on the book_title
         if search_query:
             user_book_query = user_book_query.filter(
                 text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
             ).params(search=f'*{search_query}*')
 
-        user_book_pagination: Pagination = user_book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
+        # Paginate the query results
+        # 'page' and 'per_page' determine the pagination settings
+        user_book_pagination: Pagination = user_book_query.order_by(Books.isbn) \
+            .paginate(page=page, per_page=per_page, error_out=False)
+
+        # Process the paginated items to prepare them for the response
         user_books = [
-            {**{**book.to_dict(), "id": book.to_dict().pop("isbn")}, "user_rating": user_book.user_rating}
+            {
+                **{**book.to_dict(), "id": book.to_dict().pop("isbn")},
+                "user_rating": user_book.user_rating
+            }
             for user_book, book in user_book_pagination.items
         ]
+
+        # Retrieve the total number of books found for pagination metadata
         total_books = user_book_pagination.total
 
         logging.info("Retrieved %s user-specific books", len(user_books))
+
+        # Add the list of user-specific books to the response data
         data['books'] = user_books
+
+        # Add pagination details for books to the pagination_data dictionary
         pagination_data['books'] = {
             "current_page": user_book_pagination.page,
             "per_page": user_book_pagination.per_page,
