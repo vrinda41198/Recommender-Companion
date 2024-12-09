@@ -146,30 +146,30 @@ def get_user_list(email, tab_type, search_query, page, per_page):
         }
 
     # Retrieve User's Books
-    # if tab_type in ['book', '']:
-    #     user_book_query = db.session.query(UserBooksRead, Books).join(Books, UserBooksRead.isbn == Books.isbn)\
-    #         .filter(UserBooksRead.email == email)
-    #
-    #     if search_query:
-    #         user_book_query = user_book_query.filter(
-    #             text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
-    #         ).params(search=f'*{search_query}*')
-    #
-    #     user_book_pagination: Pagination = user_book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
-    #     user_books = [
-    #         {**{**book.to_dict(), "id": book.to_dict().pop("isbn")}, "user_rating": user_book.user_rating}
-    #         for user_book, book in user_book_pagination.items
-    #     ]
-    #     total_books = user_book_pagination.total
-    #
-    #     logging.info("Retrieved %s user-specific books", len(user_books))
-    #     data['books'] = user_books
-    #     pagination_data['books'] = {
-    #         "current_page": user_book_pagination.page,
-    #         "per_page": user_book_pagination.per_page,
-    #         "total_pages": user_book_pagination.pages,
-    #         "total_items": user_book_pagination.total
-    #     }
+    if tab_type in ['book', '']:
+        user_book_query = db.session.query(UserBooksRead, Books).join(Books, UserBooksRead.isbn == Books.isbn)\
+            .filter(UserBooksRead.email == email)
+
+        if search_query:
+            user_book_query = user_book_query.filter(
+                text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*')
+
+        user_book_pagination: Pagination = user_book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
+        user_books = [
+            {**{**book.to_dict(), "id": book.to_dict().pop("isbn")}, "user_rating": user_book.user_rating}
+            for user_book, book in user_book_pagination.items
+        ]
+        total_books = user_book_pagination.total
+
+        logging.info("Retrieved %s user-specific books", len(user_books))
+        data['books'] = user_books
+        pagination_data['books'] = {
+            "current_page": user_book_pagination.page,
+            "per_page": user_book_pagination.per_page,
+            "total_pages": user_book_pagination.pages,
+            "total_items": user_book_pagination.total
+        }
 
     return data, pagination_data
 
