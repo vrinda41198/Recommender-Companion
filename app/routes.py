@@ -89,26 +89,26 @@ def get_global_list(tab_type, search_query, page, per_page):
             "total_items": movie_pagination.total
         }
 
-    # Retrieve Books
-    # if tab_type in ['book', '']:
-    #     book_query = Books.query
-    #     if search_query:
-    #         book_query = book_query.filter(
-    #             text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
-    #         ).params(search=f'*{search_query}*')
-    #
-    #     book_pagination: Pagination = book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
-    #     books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for book in book_pagination.items]
-    #     total_books = book_pagination.total
-    #
-    #     logging.info("Retrieved %s books", len(books))
-    #     data['books'] = books
-    #     pagination_data['books'] = {
-    #         "current_page": book_pagination.page,
-    #         "per_page": book_pagination.per_page,
-    #         "total_pages": book_pagination.pages,
-    #         "total_items": book_pagination.total
-    #     }
+    Retrieve Books
+    if tab_type in ['book', '']:
+        book_query = Books.query
+        if search_query:
+            book_query = book_query.filter(
+                text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*')
+
+        book_pagination: Pagination = book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
+        books = [{**book.to_dict(), "id": book.to_dict().pop("id")} for book in book_pagination.items]
+        total_books = book_pagination.total
+
+        logging.info("Retrieved %s books", len(books))
+        data['books'] = books
+        pagination_data['books'] = {
+            "current_page": book_pagination.page,
+            "per_page": book_pagination.per_page,
+            "total_pages": book_pagination.pages,
+            "total_items": book_pagination.total
+        }
 
     return data, pagination_data
 
