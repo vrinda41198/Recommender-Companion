@@ -157,7 +157,7 @@ def get_user_list(email, tab_type, search_query, page, per_page):
 
         user_book_pagination: Pagination = user_book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
         user_books = [
-            {**{**book.to_dict(), "id": book.to_dict().pop("id")}, "user_rating": user_book.user_rating}
+            {**{**book.to_dict(), "id": book.to_dict().pop("isbn")}, "user_rating": user_book.user_rating}
             for user_book, book in user_book_pagination.items
         ]
         total_books = user_book_pagination.total
