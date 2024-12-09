@@ -89,7 +89,7 @@ def get_global_list(tab_type, search_query, page, per_page):
             "total_items": movie_pagination.total
         }
 
-    Retrieve Books
+    #Retrieve Books
     if tab_type in ['book', '']:
         book_query = Books.query
         if search_query:
@@ -98,7 +98,7 @@ def get_global_list(tab_type, search_query, page, per_page):
             ).params(search=f'*{search_query}*')
 
         book_pagination: Pagination = book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
-        books = [{**book.to_dict(), "id": book.to_dict().pop("id")} for book in book_pagination.items]
+        books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for book in book_pagination.items]
         total_books = book_pagination.total
 
         logging.info("Retrieved %s books", len(books))
