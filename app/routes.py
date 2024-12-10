@@ -61,7 +61,6 @@ def get_listings():
     }), 200
 
 def get_global_list(tab_type, search_query, page, per_page):
-
     logging.info("Retrieving global list - Type: %s, Query: '%s', Page: %s, Per Page: %s",
                 tab_type, search_query, page, per_page)
 
@@ -70,13 +69,20 @@ def get_global_list(tab_type, search_query, page, per_page):
 
     # Retrieve Movies
     if tab_type in ['movie', '']:
-        movie_query = Movies.query
         if search_query:
-            movie_query = movie_query.filter(
+            # Use MATCH ... AGAINST with boolean mode and relevance scoring
+            movie_query = Movies.query.filter(
                 text("MATCH(title) AGAINST (:search IN BOOLEAN MODE)")
             ).params(search=f'*{search_query}*')
+            
+            # Add order by relevance
+            movie_query = movie_query.order_by(
+                text("MATCH(title) AGAINST (:search IN BOOLEAN MODE) DESC")
+            ).params(search=f'*{search_query}*')
+        else:
+            movie_query = Movies.query.order_by(Movies.id)
 
-        movie_pagination: Pagination = movie_query.order_by(Movies.id).paginate(page=page, per_page=per_page, error_out=False)
+        movie_pagination: Pagination = movie_query.paginate(page=page, per_page=per_page, error_out=False)
         movies = [movie.to_dict() for movie in movie_pagination.items]
         total_movies = movie_pagination.total
 
@@ -89,15 +95,22 @@ def get_global_list(tab_type, search_query, page, per_page):
             "total_items": movie_pagination.total
         }
 
-    #Retrieve Books
+    # Retrieve Books
     if tab_type in ['book', '']:
-        book_query = Books.query
         if search_query:
-            book_query = book_query.filter(
+            # Use MATCH ... AGAINST with boolean mode and relevance scoring
+            book_query = Books.query.filter(
                 text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE)")
             ).params(search=f'*{search_query}*')
+            
+            # Add order by relevance
+            book_query = book_query.order_by(
+                text("MATCH(book_title) AGAINST (:search IN BOOLEAN MODE) DESC")
+            ).params(search=f'*{search_query}*')
+        else:
+            book_query = Books.query.order_by(Books.isbn)
 
-        book_pagination: Pagination = book_query.order_by(Books.isbn).paginate(page=page, per_page=per_page, error_out=False)
+        book_pagination: Pagination = book_query.paginate(page=page, per_page=per_page, error_out=False)
         books = [{**book.to_dict(), "id": book.to_dict().pop("isbn")} for book in book_pagination.items]
         total_books = book_pagination.total
 
@@ -126,10 +139,15 @@ def get_user_list(email, tab_type, search_query, page, per_page):
 
         if search_query:
             user_movie_query = user_movie_query.filter(
-                text("MATCH(movies.title) AGAINST (:search IN BOOLEAN MODE)")  # Changed Movies.title to movies.title
+                text("MATCH(movies.title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*')
+            
+            # Add order by relevance
+            user_movie_query = user_movie_query.order_by(
+                text("MATCH(movies.title) AGAINST (:search IN BOOLEAN MODE) DESC")
             ).params(search=f'*{search_query}*')
 
-        user_movie_pagination: Pagination = user_movie_query.order_by(Movies.id).paginate(page=page, per_page=per_page, error_out=False)
+        user_movie_pagination: Pagination = user_movie_query.paginate(page=page, per_page=per_page, error_out=False)
         user_movies = [
             {**movie.to_dict(), "user_rating": user_movie.user_rating}
             for user_movie, movie in user_movie_pagination.items
@@ -153,12 +171,15 @@ def get_user_list(email, tab_type, search_query, page, per_page):
 
         if search_query:
             user_book_query = user_book_query.filter(
-                text("MATCH(books.book_title) AGAINST (:search IN BOOLEAN MODE)")  # Also fixed books table reference
+                text("MATCH(books.book_title) AGAINST (:search IN BOOLEAN MODE)")
+            ).params(search=f'*{search_query}*')
+            
+            # Add order by relevance
+            user_book_query = user_book_query.order_by(
+                text("MATCH(books.book_title) AGAINST (:search IN BOOLEAN MODE) DESC")
             ).params(search=f'*{search_query}*')
 
-        user_book_pagination: Pagination = user_book_query.order_by(Books.isbn) \
-            .paginate(page=page, per_page=per_page, error_out=False)
-
+        user_book_pagination: Pagination = user_book_query.paginate(page=page, per_page=per_page, error_out=False)
         user_books = [
             {
                 **{**book.to_dict(), "id": book.to_dict().pop("isbn")},
