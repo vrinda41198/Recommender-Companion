@@ -44,7 +44,10 @@ export interface Book extends BaseItem {
     book_title: string;
     image_url_s: string;
     isbn: number;
-    year_of_publication: number
+    id: number;
+    year_of_publication: number;
+    type: 'book';
+    user_rating: number;
 }
 
 export interface Review {

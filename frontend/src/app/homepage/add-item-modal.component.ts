@@ -28,7 +28,6 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
             >
           </div>
 
-
           <!-- Search Results -->
           <div class="search-results" *ngIf="searchResults.length > 0">
             <div 
@@ -37,10 +36,30 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
               [class.selected]="selectedItem?.id === item.id"
               (click)="selectItem(item)"
             >
-          <h3>{{ isBook(item) ? item.book_title : item.title }}</h3>
-          <p *ngIf="isBook(item)">by {{ item.book_author }}</p>
-          <p *ngIf="isMovie(item)">Cast: {{ item.cast }}</p>
+              <h3>{{ isBook(item) ? item.book_title : item.title }}</h3>
+              <p *ngIf="isBook(item)">by {{ item.book_author }}</p>
+              <p *ngIf="isMovie(item)">Cast: {{ item.cast }}</p>
+            </div>
 
+            <!-- Pagination Controls -->
+            <div class="pagination-controls" *ngIf="totalPages > 1">
+              <button 
+                class="pagination-button" 
+                [disabled]="currentPage === 1"
+                (click)="changePage(currentPage - 1)">
+                Previous
+              </button>
+              
+              <span class="pagination-info">
+                Page {{currentPage}} of {{totalPages}}
+              </span>
+              
+              <button 
+                class="pagination-button" 
+                [disabled]="currentPage === totalPages"
+                (click)="changePage(currentPage + 1)">
+                Next
+              </button>
             </div>
           </div>
 
@@ -60,16 +79,18 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
               </div>
             </div>
 
-        <div class="modal-footer">
-          <button 
-            class="cancel-button"
-            (click)="close.emit()"
-          >Cancel</button>
-          <button 
-            class="submit-button"
-            [disabled]="!canSubmit"
-            (click)="submitReview()"
-          >Add to {{itemType === 'movie' ? 'Watched' : 'Read'}}</button>
+            <div class="modal-footer">
+              <button 
+                class="cancel-button"
+                (click)="close.emit()"
+              >Cancel</button>
+              <button 
+                class="submit-button"
+                [disabled]="!canSubmit"
+                (click)="submitReview()"
+              >Add to {{itemType === 'movie' ? 'Watched' : 'Read'}}</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -171,6 +192,39 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
       color: #6b7280;
     }
 
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .pagination-button {
+      padding: 0.5rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .pagination-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-button:hover:not(:disabled) {
+      background-color: #f3f4f6;
+    }
+
+    .pagination-info {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
     .review-section {
       border-top: 1px solid #e5e7eb;
       padding-top: 1.5rem;
@@ -196,18 +250,6 @@ import { Movie, Book, Review, isMovie, isBook } from '../models';
 
     .star-button.active {
       color: #fbbf24;
-    }
-
-    .review-input {
-      margin-bottom: 1rem;
-    }
-
-    .review-textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-      resize: vertical;
     }
 
     .modal-footer {
@@ -251,6 +293,11 @@ export class AddItemModalComponent {
   selectedItem: (Movie | Book) | null = null;
   rating = 0;
   review = '';
+  
+  // Pagination state
+  currentPage = 1;
+  totalPages = 1;
+  readonly perPage = 10;
 
   // Make type guards available in template
   isMovie = isMovie;
@@ -268,16 +315,36 @@ export class AddItemModalComponent {
       return;
     }
 
-    this.apiService.getListings(this.itemType, true, this.searchQuery).subscribe({
+    this.apiService.getListings(
+      this.itemType, 
+      true, 
+      this.searchQuery,
+      this.currentPage,
+      this.perPage
+    ).subscribe({
       next: (response) => {
+        const dataKey = this.itemType === 'movie' ? 'movies' : 'books';
+        this.searchResults = response.data[dataKey] || [];
         
-        this.searchResults = response.data || [];
-  
+        // Update pagination information
+        const paginationInfo = response.pagination[dataKey];
+        if (paginationInfo) {
+          this.totalPages = paginationInfo.total_pages;
+          this.currentPage = paginationInfo.current_page;
+        }
       },
       error: (error) => {
         console.error('Search error:', error);
+        this.searchResults = [];
       }
     });
+  }
+
+  changePage(newPage: number) {
+    if (newPage >= 1 && newPage <= this.totalPages) {
+      this.currentPage = newPage;
+      this.onSearch();
+    }
   }
 
   selectItem(item: Movie | Book) {
