@@ -1,18 +1,25 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { ApiService } from './services/api.service';
+import { RouterTestingModule } from '@angular/router/testing';
+import AppComponent from './app.component';
+import { RouterOutlet } from '@angular/router';
+import { By } from '@angular/platform-browser';
 
-describe('ApiService', () => {
-  let service: ApiService;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [ApiService, provideHttpClient()], // Provide HttpClient for testing
-    });
-    service = TestBed.inject(ApiService);
+describe('AppComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [RouterTestingModule, AppComponent],
+    }).compileComponents();
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
+  it('should create the AppComponent', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it('should render a router-outlet', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const routerOutlet = fixture.debugElement.query(By.directive(RouterOutlet));
+    expect(routerOutlet).not.toBeNull();
   });
 });

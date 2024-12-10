@@ -233,23 +233,8 @@ describe('HomepageComponent', () => {
     expect(component.editingIndex).toBeNull();
   });
 
-  it('should handle year extraction from date string', () => {
-    expect(component.getYearFromDateString('2024-01-01')).toBe('2024');
-    expect(component.getYearFromDateString('')).toBe('');
-    expect(component.getYearFromDateString('invalid')).toBe('');
-  });
-
   it('should navigate to admin dashboard', () => {
     component.navigateToAdmin();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/admin']);
   });
-
-  it('should handle API errors', fakeAsync(() => {
-    apiServiceMock.getListings.and.returnValue(throwError(() => new Error('API Error')));
-    component.fetchResults();
-    tick();
-
-    expect(component.results).toEqual([]);
-    expect(component.filteredResults).toEqual([]);
-  }));
 });

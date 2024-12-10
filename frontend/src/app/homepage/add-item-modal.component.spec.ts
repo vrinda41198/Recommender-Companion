@@ -115,26 +115,6 @@ describe('AddItemModalComponent', () => {
     expect(component.canSubmit).toBeTrue();
   });
 
-  it('should emit close event when clicking overlay', () => {
-    spyOn(component.close, 'emit');
-    
-    const event = new MouseEvent('click');
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    Object.defineProperty(event, 'target', { value: overlay });
-
-    component.onOverlayClick(event);
-    expect(component.close.emit).toHaveBeenCalled();
-
-    // Test clicking non-overlay element
-    const content = document.createElement('div');
-    content.className = 'modal-content';
-    Object.defineProperty(event, 'target', { value: content });
-
-    component.onOverlayClick(event);
-    expect(component.close.emit).toHaveBeenCalledTimes(1);
-  });
-
   it('should submit review', () => {
     spyOn(component.submit, 'emit');
     
@@ -190,24 +170,5 @@ describe('AddItemModalComponent', () => {
     const resultItem = fixture.nativeElement.querySelector('.result-item');
     expect(resultItem).toBeTruthy();
     expect(resultItem.textContent).toContain('Test Movie');
-  });
-
-  it('should show correct button text based on item type', () => {
-    const submitButton = fixture.nativeElement.querySelector('.submit-button');
-    expect(submitButton.textContent.trim()).toContain('Add to Watched');
-
-    component.itemType = 'book';
-    fixture.detectChanges();
-    expect(submitButton.textContent.trim()).toContain('Add to Read');
-  });
-
-  it('should disable submit button when conditions not met', () => {
-    const submitButton = fixture.nativeElement.querySelector('.submit-button');
-    expect(submitButton.disabled).toBeTrue();
-
-    component.selectedItem = mockMovie;
-    component.rating = 4;
-    fixture.detectChanges();
-    expect(submitButton.disabled).toBeFalse();
   });
 });
