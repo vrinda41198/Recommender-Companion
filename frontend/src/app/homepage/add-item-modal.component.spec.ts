@@ -39,9 +39,25 @@ describe('AddItemModalComponent', () => {
   };
 
   const mockApiResponse = {
-    data: [mockMovie],
-    total: 1,
-    page: 1
+    status: 'success',
+    data: {
+      movies: [mockMovie],
+      books: []
+    },
+    pagination: {
+      movies: {
+        current_page: 1,
+        per_page: 10,
+        total_items: 1,
+        total_pages: 1
+      },
+      books: {
+        current_page: 1,
+        per_page: 10,
+        total_items: 0,
+        total_pages: 0
+      }
+    }
   };
 
   beforeEach(async () => {
@@ -85,8 +101,14 @@ describe('AddItemModalComponent', () => {
     component.onSearch();
     tick();
 
-    expect(apiServiceMock.getListings).toHaveBeenCalledWith('movie', true, 'test');
-    expect(component.searchResults).toEqual(mockApiResponse.data);
+    expect(apiServiceMock.getListings).toHaveBeenCalledWith(
+      'movie', 
+      true, 
+      'test',
+      1,
+      10
+    );
+    expect(component.searchResults).toEqual(mockApiResponse.data.movies);
   }));
 
   it('should handle search errors', fakeAsync(() => {
@@ -98,6 +120,7 @@ describe('AddItemModalComponent', () => {
     tick();
 
     expect(console.error).toHaveBeenCalled();
+    expect(component.searchResults).toEqual([]);
   }));
 
   it('should select item', () => {
@@ -150,11 +173,39 @@ describe('AddItemModalComponent', () => {
     component.searchQuery = 'test';
     component.onSearch();
 
-    expect(apiServiceMock.getListings).toHaveBeenCalledWith('book', true, 'test');
+    expect(apiServiceMock.getListings).toHaveBeenCalledWith(
+      'book', 
+      true, 
+      'test',
+      1,
+      10
+    );
   });
 
   it('should handle empty API response', fakeAsync(() => {
-    apiServiceMock.getListings.and.returnValue(of({ data: [], total: 0, page: 1 }));
+    const emptyResponse = {
+      status: 'success',
+      data: {
+        movies: [],
+        books: []
+      },
+      pagination: {
+        movies: {
+          current_page: 1,
+          per_page: 10,
+          total_items: 0,
+          total_pages: 0
+        },
+        books: {
+          current_page: 1,
+          per_page: 10,
+          total_items: 0,
+          total_pages: 0
+        }
+      }
+    };
+    
+    apiServiceMock.getListings.and.returnValue(of(emptyResponse));
     
     component.searchQuery = 'test';
     component.onSearch();
@@ -171,4 +222,61 @@ describe('AddItemModalComponent', () => {
     expect(resultItem).toBeTruthy();
     expect(resultItem.textContent).toContain('Test Movie');
   });
+
+  it('should handle overlay click', () => {
+    spyOn(component.close, 'emit');
+    const event = new MouseEvent('click');
+    Object.defineProperty(event, 'target', { value: { classList: { contains: () => true } } });
+    
+    component.onOverlayClick(event);
+    expect(component.close.emit).toHaveBeenCalled();
+  });
+
+  it('should handle pagination', fakeAsync(() => {
+    // Initial setup with mock response
+    const mockResponse = {
+      status: 'success',
+      data: {
+        movies: [mockMovie],
+        books: []
+      },
+      pagination: {
+        movies: {
+          current_page: 2,
+          per_page: 10,
+          total_items: 20,
+          total_pages: 2
+        },
+        books: {
+          current_page: 1,
+          per_page: 10,
+          total_items: 0,
+          total_pages: 0
+        }
+      }
+    };
+  
+    apiServiceMock.getListings.and.returnValue(of(mockResponse));
+  
+    // Trigger initial search to set up pagination state
+    component.searchQuery = 'test';
+    component.onSearch();
+    tick();
+  
+    // Clear previous calls to start fresh
+    apiServiceMock.getListings.calls.reset();
+  
+    // Change page
+    component.changePage(2);
+    tick();
+  
+    expect(component.currentPage).toBe(2);
+    expect(apiServiceMock.getListings).toHaveBeenCalledWith(
+      'movie',
+      true,
+      'test',
+      2,
+      10
+    );
+  }));
 });

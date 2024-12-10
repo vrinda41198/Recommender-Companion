@@ -181,6 +181,16 @@ describe('RecommendationModalComponent', () => {
     expect(apiServiceMock.generateRecommendations).toHaveBeenCalled();
     flush();
   }));
+  
+  it('should show empty state if no recommendations returned for a tab', fakeAsync(() => {
+    // Return empty data for movies
+    apiServiceMock.generateRecommendations.and.returnValue(of({ data: [], total: 0, page: 1 }));
+    component.setTab('movies');
+    tick();
+    expect(component.filteredRecommendations.length).toBe(0);
+    flush();
+  }));
+  
 
   it('should emit close on button clicks', fakeAsync(() => {
     fixture.detectChanges();

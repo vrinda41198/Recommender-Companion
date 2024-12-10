@@ -50,6 +50,8 @@ export class AuthCallbackComponent implements OnInit {
       next: (response) => {
         if (response?.user?.role === 'admin') {
           this.router.navigate(['/admin']);
+        } else if (response?.user?.isNewUser || !response?.user?.onboardingCompleted) {
+          this.router.navigate(['/welcome']);
         } else {
           this.router.navigate(['/home']);
         }

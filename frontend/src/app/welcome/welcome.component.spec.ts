@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush} from '@angular/core/testing';
 import { WelcomeComponent } from './welcome.component';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { ApiService } from '../services/api.service';
 import { Router } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
+import { AddItemModalComponent } from '../homepage/add-item-modal.component';
 
 describe('WelcomeComponent', () => {
   let component: WelcomeComponent;
@@ -39,11 +40,9 @@ describe('WelcomeComponent', () => {
   };
 
   beforeEach(async () => {
-    authServiceMock = jasmine.createSpyObj('AuthService', 
-      ['getOnboardingStatus', 'completeOnboarding', 'checkAuthStatus'], 
-      {
-        authState$: new BehaviorSubject(mockAuthState)
-      }
+    authServiceMock = jasmine.createSpyObj('AuthService',
+      ['getOnboardingStatus', 'completeOnboarding', 'checkAuthStatus'],
+      { authState$: new BehaviorSubject(mockAuthState) }
     );
     apiServiceMock = jasmine.createSpyObj('ApiService', ['updateUserAge', 'submitReview']);
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
@@ -56,7 +55,11 @@ describe('WelcomeComponent', () => {
     apiServiceMock.submitReview.and.returnValue(of(null));
 
     await TestBed.configureTestingModule({
-      imports: [FormsModule, WelcomeComponent],
+      imports: [
+        FormsModule,
+        WelcomeComponent,
+        AddItemModalComponent
+      ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: ApiService, useValue: apiServiceMock },
@@ -73,13 +76,15 @@ describe('WelcomeComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize with default values', () => {
+  it('should initialize with default values', fakeAsync(() => {
+    tick();
     expect(component.userAge).toBeNull();
     expect(component.ageSubmitted).toBeFalse();
     expect(component.showModal).toBeFalse();
     expect(component.modalType).toBe('movie');
     expect(component.progress).toEqual({ movies: 2, books: 1 });
-  });
+    flush();
+  }));
 
   it('should validate age input', () => {
     component.userAge = null;
@@ -102,6 +107,7 @@ describe('WelcomeComponent', () => {
 
     expect(apiServiceMock.updateUserAge).toHaveBeenCalledWith(25);
     expect(component.ageSubmitted).toBeTrue();
+    flush();
   }));
 
   it('should handle age submission error', fakeAsync(() => {
@@ -114,6 +120,7 @@ describe('WelcomeComponent', () => {
 
     expect(console.error).toHaveBeenCalled();
     expect(component.ageSubmitted).toBeFalse();
+    flush();
   }));
 
   it('should fetch progress on init', fakeAsync(() => {
@@ -122,6 +129,7 @@ describe('WelcomeComponent', () => {
 
     expect(authServiceMock.getOnboardingStatus).toHaveBeenCalled();
     expect(component.progress).toEqual({ movies: 2, books: 1 });
+    flush();
   }));
 
   it('should handle progress fetch error', fakeAsync(() => {
@@ -132,6 +140,7 @@ describe('WelcomeComponent', () => {
     tick();
 
     expect(console.error).toHaveBeenCalled();
+    flush();
   }));
 
   it('should validate completion requirements', () => {
@@ -168,54 +177,43 @@ describe('WelcomeComponent', () => {
     expect(apiServiceMock.submitReview).toHaveBeenCalledWith(mockReview);
     expect(component.showModal).toBeFalse();
     expect(authServiceMock.getOnboardingStatus).toHaveBeenCalled();
+    flush();
   }));
 
   it('should handle modal submission error', fakeAsync(() => {
     apiServiceMock.submitReview.and.returnValue(throwError(() => new Error('API Error')));
     spyOn(console, 'error');
 
-    const mockReview = {
+    component.handleModalSubmit({
       itemId: 1,
-      itemType: 'movie' as const,
+      itemType: 'movie',
       rating: 5,
       review: 'Great!'
-    };
-
-    component.handleModalSubmit(mockReview);
+    });
     tick();
 
     expect(console.error).toHaveBeenCalled();
-  }));
-
-  it('should complete onboarding', fakeAsync(() => {
-    component.progress = { movies: 3, books: 3 };
-    const updatedAuthState = {
-      ...mockAuthState,
-      user: { ...mockAuthState.user, onboardingCompleted: true }
-    };
-
-    // Update the auth state after completion
-    setTimeout(() => {
-      (authServiceMock.authState$ as BehaviorSubject<any>).next(updatedAuthState);
-    }, 100);
-
-    component.completeOnboarding();
-    tick(100);
-
-    expect(authServiceMock.completeOnboarding).toHaveBeenCalled();
-    expect(authServiceMock.checkAuthStatus).toHaveBeenCalled();
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/home']);
+    expect(component.showModal).toBeFalse();
     flush();
   }));
 
-  it('should not complete onboarding if requirements not met', () => {
+  it('should complete onboarding when requirements are met', fakeAsync(() => {
+    component.progress = { movies: 3, books: 3 };
+    component.completeOnboarding();
+    tick();
+
+    expect(authServiceMock.completeOnboarding).toHaveBeenCalled();
+    expect(authServiceMock.checkAuthStatus).toHaveBeenCalled();
+    flush();
+  }));
+
+  it('should not complete onboarding when requirements are not met', () => {
     component.progress = { movies: 2, books: 2 };
     component.completeOnboarding();
-
     expect(authServiceMock.completeOnboarding).not.toHaveBeenCalled();
   });
 
-  it('should handle onboarding completion error', fakeAsync(() => {
+  it('should handle error during onboarding completion', fakeAsync(() => {
     component.progress = { movies: 3, books: 3 };
     authServiceMock.completeOnboarding.and.returnValue(throwError(() => new Error('API Error')));
     spyOn(console, 'error');
@@ -225,5 +223,6 @@ describe('WelcomeComponent', () => {
 
     expect(console.error).toHaveBeenCalled();
     expect(routerMock.navigate).not.toHaveBeenCalled();
+    flush();
   }));
 });

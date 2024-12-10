@@ -200,8 +200,24 @@ describe('AdminComponent', () => {
     flush();
   }));
 
-
-
+  it('should show success message and clear it after timeout', fakeAsync(() => {
+    component.showSuccess('Operation successful!');
+    expect(component.submitMessage).toBe('Operation successful!');
+    expect(component.submitSuccess).toBeTrue();
+    tick(3000);
+    expect(component.submitMessage).toBe('');
+    flush();
+  }));
+  
+  it('should show error message and clear it after timeout', fakeAsync(() => {
+    component.showError('Something went wrong');
+    expect(component.submitMessage).toBe('Something went wrong');
+    expect(component.submitSuccess).toBeFalse();
+    tick(5000);
+    expect(component.submitMessage).toBe('');
+    flush();
+  }));
+  
   it('should create with initial state', () => {
     expect(component).toBeTruthy();
     expect(component.isSubmitting).toBeFalse();

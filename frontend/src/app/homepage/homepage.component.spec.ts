@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush} from '@angular/core/testing';
 import { HomepageComponent } from './homepage.component';
 import { AuthService } from '../services/auth.service';
 import { ApiService } from '../services/api.service';
@@ -7,6 +7,9 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { Movie, Book } from '../models';
+import { AddItemModalComponent } from './add-item-modal.component';
+import { RecommendationModalComponent } from './recommendation-modal.component';
+import { DeleteAccountModalComponent } from './delete-account-modal.component';
 
 describe('HomepageComponent', () => {
   let component: HomepageComponent;
@@ -30,7 +33,6 @@ describe('HomepageComponent', () => {
     isLoading: false
   };
 
-  // Make sure all required properties are defined
   const mockMovie: Movie = {
     id: 1,
     type: 'movie',
@@ -47,7 +49,7 @@ describe('HomepageComponent', () => {
   };
 
   const mockBook: Book = {
-    id: 1,
+    id: 2,
     type: 'book',
     book_author: 'Test Author',
     book_title: 'Test Book',
@@ -59,9 +61,25 @@ describe('HomepageComponent', () => {
   };
 
   const mockApiResponse = {
-    data: [mockMovie, mockBook],
-    total: 2,
-    page: 1
+    status: 'success',
+    data: {
+      movies: [mockMovie],
+      books: [mockBook]
+    },
+    pagination: {
+      movies: {
+        current_page: 1,
+        per_page: 10,
+        total_items: 1,
+        total_pages: 1
+      },
+      books: {
+        current_page: 1,
+        per_page: 10,
+        total_items: 1,
+        total_pages: 1
+      }
+    }
   };
 
   beforeEach(async () => {
@@ -88,7 +106,10 @@ describe('HomepageComponent', () => {
       imports: [
         CommonModule,
         FormsModule,
-        HomepageComponent
+        HomepageComponent,
+        AddItemModalComponent,
+        RecommendationModalComponent,
+        DeleteAccountModalComponent
       ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
@@ -122,8 +143,13 @@ describe('HomepageComponent', () => {
     component.ngOnInit();
     tick();
 
-    expect(apiServiceMock.getListings).toHaveBeenCalledWith('', false, '');
-    expect(component.results.length).toBe(2);
+    expect(apiServiceMock.getListings).toHaveBeenCalledWith(
+      '',
+      false,
+      '',
+      1,
+      3
+    );
     expect(component.filteredResults.length).toBe(2);
   }));
 
@@ -132,20 +158,28 @@ describe('HomepageComponent', () => {
     tick();
 
     expect(component.activeTab).toBe('movies');
-    expect(apiServiceMock.getListings).toHaveBeenCalledWith('movie', false, '');
+    expect(apiServiceMock.getListings).toHaveBeenCalledWith(
+      'movie',
+      false,
+      '',
+      1,
+      3
+    );
   }));
 
-  it('should filter results based on search query', () => {
-    component.results = [mockMovie, mockBook];
+  it('should handle search query changes', fakeAsync(() => {
     component.searchQuery = 'test';
+    component.onSearchChange('test');
+    tick(300); // Account for debounce time
     
-    component.applySearchFilter();
-    expect(component.filteredResults.length).toBe(2);
-
-    component.searchQuery = 'movie';
-    component.applySearchFilter();
-    expect(component.filteredResults.length).toBe(1);
-  });
+    expect(apiServiceMock.getListings).toHaveBeenCalledWith(
+      '',
+      false,
+      'test',
+      1,
+      3
+    );
+  }));
 
   it('should handle logout', fakeAsync(() => {
     component.logout();
@@ -165,7 +199,6 @@ describe('HomepageComponent', () => {
   }));
 
   it('should handle item deletion', fakeAsync(() => {
-    // Ensure the item has an id
     const itemToDelete = { ...mockMovie, id: 1 };
     component.deleteItem(itemToDelete);
     tick();
@@ -175,7 +208,6 @@ describe('HomepageComponent', () => {
   }));
 
   it('should update item rating', fakeAsync(() => {
-    // Ensure the item has an id
     const itemToUpdate = { ...mockMovie, id: 1 };
     component.editingIndex = 0;
     component.newRating = 5;
@@ -236,5 +268,111 @@ describe('HomepageComponent', () => {
   it('should navigate to admin dashboard', () => {
     component.navigateToAdmin();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/admin']);
+  });
+
+  it('should handle modal submit', fakeAsync(() => {
+    const review = {
+      itemId: 1,
+      itemType: 'movie' as const,
+      rating: 4,
+      review: 'Great movie'
+    };
+
+    component.handleModalSubmit(review);
+    tick();
+
+    expect(apiServiceMock.submitReview).toHaveBeenCalledWith(review);
+    expect(component.showModal).toBeFalse();
+    expect(apiServiceMock.getListings).toHaveBeenCalled();
+  }));
+
+  it('should handle pagination', fakeAsync(() => {
+    // Initial mock response with total pages = 2
+    const mockInitialResponse = {
+      status: 'success',
+      data: {
+        movies: [mockMovie],
+        books: [mockBook]
+      },
+      pagination: {
+        movies: {
+          current_page: 1,
+          per_page: 3,
+          total_items: 6,
+          total_pages: 2
+        },
+        books: {
+          current_page: 1,
+          per_page: 3,
+          total_items: 6,
+          total_pages: 2
+        }
+      }
+    };
+  
+    const mockNextPageResponse = {
+      status: 'success',
+      data: {
+        movies: [mockMovie],
+        books: [mockBook]
+      },
+      pagination: {
+        movies: {
+          current_page: 2,
+          per_page: 3,
+          total_items: 6,
+          total_pages: 2
+        },
+        books: {
+          current_page: 2,
+          per_page: 3,
+          total_items: 6,
+          total_pages: 2
+        }
+      }
+    };
+  
+    // Set up initial page load
+    apiServiceMock.getListings.and.returnValue(of(mockInitialResponse));
+    component.ngOnInit();
+    tick();
+  
+    expect(component.currentPage).toBe(1);
+    expect(component.totalPages).toBe(2);
+  
+    // Reset apiService mock for next page
+    apiServiceMock.getListings.calls.reset();
+    apiServiceMock.getListings.and.returnValue(of(mockNextPageResponse));
+  
+    // Change to page 2
+    component.changePage(2);
+    tick();
+  
+    expect(component.currentPage).toBe(2);
+    expect(apiServiceMock.getListings).toHaveBeenCalledWith(
+      '',
+      false,
+      '',
+      2,
+      3
+    );
+  
+    // Test navigating beyond bounds
+    component.changePage(3); // Should not change page
+    tick();
+    expect(component.currentPage).toBe(2); // Still on page 2
+  
+    component.changePage(0); // Should not change page
+    tick();
+    expect(component.currentPage).toBe(2); // Still on page 2
+  
+    flush();
+  }));
+
+  it('should get page numbers', () => {
+    component.totalPages = 10;
+    component.currentPage = 5;
+    const pages = component.getPageNumbers();
+    expect(pages).toEqual([3, 4, 5, 6, 7]);
   });
 });
