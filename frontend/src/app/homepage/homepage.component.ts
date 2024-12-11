@@ -298,15 +298,18 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
     }
 
     .card-image {
-        width: 100%;
-        height: 200px;
-        object-fit: contain;
-        margin: 1rem auto;
-        display: block;
-        border-radius: 4px;
-        background-color: #f3f4f6;
-        padding: 0.5rem;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: 200px;
+      object-fit: contain;
+      margin: 1rem auto;
+      display: block;
+      border-radius: 4px;
+      background-color: #f3f4f6;
+      padding: 0.5rem;
     }
+    
     .container {
       min-height: 100vh;
       background-image: 
@@ -480,12 +483,6 @@ import { DeleteAccountModalComponent } from './delete-account-modal.component';
       background-color: #2563eb;
       color: white;
       border-color: #2563eb;
-    }
-
-    .card-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
     }
 
     .card-content {
