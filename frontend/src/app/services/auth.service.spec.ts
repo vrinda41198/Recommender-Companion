@@ -3,17 +3,26 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { RouterTestingModule } from '@angular/router/testing';
 import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
+import { Routes } from '@angular/router';
 
-describe('AuthService', () => {
+describe('AuthService Additional Coverage Tests', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
   let router: Router;
+
+  // Define mock routes
+  const routes: Routes = [
+    { path: 'home', component: {} as any },
+    { path: 'login', component: {} as any },
+    { path: 'admin', component: {} as any },
+    { path: 'welcome', component: {} as any }
+  ];
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         HttpClientTestingModule,
-        RouterTestingModule
+        RouterTestingModule.withRoutes(routes)
       ],
       providers: [AuthService]
     });
@@ -24,9 +33,12 @@ describe('AuthService', () => {
   });
 
   afterEach(() => {
-    // Handle initial auth check request
-    const authCheckReq = httpMock.expectOne('/api/auth/user');
-    authCheckReq.flush({
+    httpMock.verify();
+  });
+
+  it('should be created', () => {
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
       user: {
         displayName: 'Test User',
         email: 'test@example.com',
@@ -35,14 +47,22 @@ describe('AuthService', () => {
         isNewUser: false
       }
     });
-    httpMock.verify();
-  });
-
-  it('should be created', () => {
     expect(service).toBeTruthy();
   });
 
   it('should delete account and navigate to login', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
     spyOn(router, 'navigate');
     
     service.deleteAccount().subscribe();
@@ -56,6 +76,18 @@ describe('AuthService', () => {
   }));
 
   it('should mark onboarding as complete', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
     const initialState = {
       isLoggedIn: true,
       isAdmin: false,
@@ -69,7 +101,6 @@ describe('AuthService', () => {
       isLoading: false
     };
 
-    // Set initial state
     service['authState'].next(initialState);
 
     service.completeOnboarding().subscribe();
@@ -82,9 +113,21 @@ describe('AuthService', () => {
     const currentState = service['authState'].value;
     expect(currentState.user?.onboardingCompleted).toBeTrue();
     expect(currentState.user?.isNewUser).toBeFalse();
-}));
+  }));
 
   it('should handle a successful callback and navigate based on user role', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
     spyOn(router, 'navigate');
     const mockResponse = {
       user: {
@@ -108,6 +151,18 @@ describe('AuthService', () => {
   }));
 
   it('should handle a callback error and navigate to login', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
     spyOn(router, 'navigate');
     spyOn(console, 'error');
 
@@ -124,6 +179,18 @@ describe('AuthService', () => {
   }));
 
   it('should fetch login URL', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
     const mockResponse = { auth_url: 'https://example.com/login' };
     
     service.initiateLogin().subscribe(response => {
@@ -137,6 +204,18 @@ describe('AuthService', () => {
   }));
 
   it('should clear auth state and navigate to login on logout', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
     spyOn(router, 'navigate');
 
     service.logout().subscribe();
@@ -153,7 +232,240 @@ describe('AuthService', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   }));
 
+  it('should not make multiple simultaneous auth checks', fakeAsync(() => {
+    // First handle the initial auth check from constructor
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
+    // Now make multiple auth status checks
+    service.checkAuthStatus().subscribe();
+    service.checkAuthStatus().subscribe();
+
+    // Only one additional request should be made
+    const requests = httpMock.match('/api/auth/user');
+    expect(requests.length).toBe(1);
+    
+    // Flush the pending request
+    requests[0].flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+    
+    tick();
+  }));
+
+  it('should manage loading state correctly', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
+    let loadingStates: boolean[] = [];
+    
+    service.authState$.subscribe(state => {
+      loadingStates.push(state.isLoading);
+    });
+
+    service.handleCallback('test-code', 'test-state').subscribe();
+    
+    const req = httpMock.expectOne('/api/auth/callback');
+    req.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+    tick();
+
+    // Should have at least one true and one false state
+    expect(loadingStates).toContain(true);
+    expect(loadingStates).toContain(false);
+  }));
+
+  it('should navigate to admin page for admin users', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
+    spyOn(router, 'navigate');
+    
+    const mockResponse = {
+      user: {
+        displayName: 'Admin User',
+        email: 'admin@example.com',
+        role: 'admin',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    };
+
+    service.handleCallback('admin-code', 'test-state').subscribe();
+
+    const req = httpMock.expectOne('/api/auth/callback');
+    req.flush(mockResponse);
+    tick();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/admin']);
+  }));
+
+  it('should navigate to welcome page for new users', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
+    spyOn(router, 'navigate');
+    
+    const mockResponse = {
+      user: {
+        displayName: 'New User',
+        email: 'new@example.com',
+        role: 'user',
+        onboardingCompleted: false,
+        isNewUser: true
+      }
+    };
+
+    service.handleCallback('new-code', 'test-state').subscribe();
+
+    const req = httpMock.expectOne('/api/auth/callback');
+    req.flush(mockResponse);
+    tick();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/welcome']);
+  }));
+
+  it('should handle logout API failure', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
+    spyOn(router, 'navigate');
+    spyOn(console, 'error');
+
+    service.logout().subscribe();
+
+    const req = httpMock.expectOne('/api/auth/logout');
+    req.error(new ErrorEvent('API Error'));
+    tick();
+
+    expect(console.error).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+  }));
+
+  it('should handle account deletion failure', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
+    spyOn(console, 'error');
+
+    service.deleteAccount().subscribe({
+      error: () => {}
+    });
+
+    const req = httpMock.expectOne('/api/auth/account');
+    req.error(new ErrorEvent('API Error'));
+    tick();
+
+    expect(console.error).toHaveBeenCalled();
+  }));
+
+  it('should handle onboarding completion error', fakeAsync(() => {
+    // Handle initial auth check
+    const initialReq = httpMock.expectOne('/api/auth/user');
+    initialReq.flush({
+      user: {
+        displayName: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        onboardingCompleted: true,
+        isNewUser: false
+      }
+    });
+
+    spyOn(console, 'error');
+
+    service.completeOnboarding().subscribe({
+      error: () => {}
+    });
+
+    const req = httpMock.expectOne('/api/auth/complete-onboarding');
+    req.error(new ErrorEvent('API Error'));
+    tick();
+
+    expect(console.error).toHaveBeenCalled();
+  }));
+
   describe('Helper methods', () => {
+    beforeEach(() => {
+      // Handle initial auth check
+      const initialReq = httpMock.expectOne('/api/auth/user');
+      initialReq.flush({
+        user: {
+          displayName: 'Test User',
+          email: 'test@example.com',
+          role: 'user',
+          onboardingCompleted: true,
+          isNewUser: false
+        }
+      });
+    });
+
     it('should check if user is authenticated', () => {
       service['authState'].next({
         isLoggedIn: true,
