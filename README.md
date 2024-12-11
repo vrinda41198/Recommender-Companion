@@ -1,4 +1,6 @@
 # Recommender Companion
+## Demo Video
+https://drive.google.com/file/d/16D3eZ8z0baw2fhF-tcB3hkYKLfhKFrLv/view?usp=sharing
 
 ## Introduction
 Recommender Companion is a web application designed to provide personalized book and movie recommendations based on user preferences. Utilizing Microsoft OAuth for authentication, Docker for consistent environment setup, and Flyway for database migrations, the application ensures a robust and secure user experience.
@@ -11,8 +13,15 @@ Recommender Companion is a web application designed to provide personalized book
 - Node.js
 - Angular CLI
 
-### Dependencies
-To install the necessary Python dependencies, run the following command in your virtual environment:
+### Installing Dependencies
+
+- Development / Testing:
+```bash
+pip install -r requirements.txt
+pip install pytest
+pip install PyJWT
+```
+- Runtime Deployment:
 ```bash
 pip install -r requirements.txt
 ```
@@ -24,13 +33,14 @@ This will install all required packages such as Flask, SQLAlchemy, and others cr
    - Tenant ID
    - Client ID
    - Client Secret
-3. Use the provided startup script to launch the application:
+3. Open AI API Key
+4. Use the provided startup script to launch the application:
     ```bash
     # Windows
-    python start.py <tenant_id> <client_id> <client_secret> <gpt_api_key>
+    python start.py <tenant_id> <client_id> <client_secret> <openai_api_key>
 
     # Linux/MacOS
-    python3 start.py <tenant_id> <client_id> <client_secret> <gpt_api_key>
+    python3 start.py <tenant_id> <client_id> <client_secret> <openai_api_key>
     ```
    For additional help:
    ```bash
@@ -60,6 +70,9 @@ Configure the project using the following environment variables in the `.env` fi
 - `DATABASE_URL`
 
 ### Database Setup
+Source Repositories:
+- Movies: https://www.kaggle.com/datasets/alanvourch/tmdb-movies-daily-updates
+- Books: https://www.kaggle.com/datasets/arashnic/book-recommendation-dataset
 The database is structured with five main tables:
 - **Movies Table**: Stores data from the TMDB repository.
 - **Books Table**: Contains book data from the GoodReads repository.
@@ -81,7 +94,7 @@ The `ApiService` and `AdminService` in the Angular frontend handle all interacti
 - **generateRecommendations**: Offers personalized recommendations.
 
 ## AI Models
-The application utilizes the OpenAI API (v1/chat/completions) - to generate personalized book and movie recommendations. Interaction with the GPT API is handled securely to ensure that user data is used effectively to enhance recommendation accuracy.
+The application utilizes the OpenAI API using GPT 3.5 Turbo Model to generate personalized book and movie recommendations. Interaction with the GPT API is handled securely to ensure that user data is used effectively to enhance recommendation accuracy.
 
 ## Security Measures
 - The Microsoft credentials are securely stored and not hard-coded.
@@ -103,19 +116,10 @@ docker-compose logs
 docker-compose exec db mysql -uuser -ppassword rc_db
 ```
 
+
 ## Running Tests
 
-### Setup Testing Environment
-1. Install required packages:
-```bash
-pip install -r requirements.txt
-pip install pytest
-pip install PyJWT
-```
-
-### Running Tests
-
-## Backend
+### Backend
 
 1. Run all tests:
 ```bash
@@ -133,7 +137,7 @@ pip install pytest-cov
 pytest --cov=app tests/test.py
 ```
 
-## Frontend
+### Frontend
 
 1. Checkout to the frontend directory
 ```bash
