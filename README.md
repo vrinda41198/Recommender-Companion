@@ -2,6 +2,9 @@
 ## Demo Video
 https://drive.google.com/file/d/16D3eZ8z0baw2fhF-tcB3hkYKLfhKFrLv/view?usp=sharing
 
+## Slides and User Manual
+Added to the repository main branch
+
 ## Introduction
 Recommender Companion is a web application designed to provide personalized book and movie recommendations based on user preferences. Utilizing Microsoft OAuth for authentication, Docker for consistent environment setup, and Flyway for database migrations, the application ensures a robust and secure user experience.
 
