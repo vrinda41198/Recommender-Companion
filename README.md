@@ -81,7 +81,7 @@ The `ApiService` and `AdminService` in the Angular frontend handle all interacti
 - **generateRecommendations**: Offers personalized recommendations.
 
 ## AI Models
-The application utilizes the GPT (Generative Pre-trained Transformer) API to generate personalized book and movie recommendations. Interaction with the GPT API is handled securely to ensure that user data is used effectively to enhance recommendation accuracy.
+The application utilizes the OpenAI API (v1/chat/completions) - to generate personalized book and movie recommendations. Interaction with the GPT API is handled securely to ensure that user data is used effectively to enhance recommendation accuracy.
 
 ## Security Measures
 - The Microsoft credentials are securely stored and not hard-coded.
