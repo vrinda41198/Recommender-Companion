@@ -1,6 +1,4 @@
 # Recommender Companion
-## Demo Video
-https://drive.google.com/file/d/16D3eZ8z0baw2fhF-tcB3hkYKLfhKFrLv/view?usp=sharing
 
 ## Slides and User Manual
 Added to the repository main branch
